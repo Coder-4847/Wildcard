@@ -27,6 +27,9 @@ export function renderReward(app, { goldEarned = 0, relicWon = null, onPick, onS
   `;
   app.appendChild(screen);
 
+  if (goldEarned) setTimeout(() => playSound('coin'), 100);
+  if (relicWon) setTimeout(() => playSound('relic'), 250);
+
   const cardsEl = screen.querySelector('#reward-cards');
   for (const card of choices) {
     const cardEl = document.createElement('div');

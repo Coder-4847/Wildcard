@@ -138,6 +138,17 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
     sprite.classList.add('hit');
   }
 
+  function lunge(sprite, dir) {
+    sprite.classList.remove('attack-anim');
+    sprite.style.setProperty('--lunge', dir);
+    void sprite.offsetWidth;
+    sprite.classList.add('attack-anim');
+  }
+
+  function playDeathAnim(sprite) {
+    sprite.classList.add('dying');
+  }
+
   function shakeScreen() {
     el.arena.classList.remove('shake');
     void el.arena.offsetWidth;
@@ -160,6 +171,7 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
         const sprite = e.target === 'enemy' ? el.enemySprite : el.heroSprite;
         spawnFloater(layer, `-${e.amount}`, 'dmg');
         flash(sprite);
+        lunge(e.target === 'enemy' ? el.heroSprite : el.enemySprite, e.target === 'enemy' ? '-18px' : '18px');
         shakeScreen();
         playSound('attack');
       } else if (e.type === 'bleedTick') {
@@ -193,6 +205,7 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
       } else if (e.type === 'turnStart') {
         showToast(e.who === 'player' ? 'Your turn' : "Enemy's turn");
       } else if (e.type === 'outcome') {
+        playDeathAnim(e.result === 'win' ? el.enemySprite : el.heroSprite);
         setTimeout(() => showOutcome(e.result), 500);
       }
     }
@@ -233,11 +246,12 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
 
   function renderHand() {
     el.hand.innerHTML = '';
-    for (const instance of state.player.hand) {
+    state.player.hand.forEach((instance, i) => {
       const card = getCard(instance.id);
       const playable = canPlayCard(state, instance.uid);
       const cardEl = document.createElement('div');
-      cardEl.className = `card rarity-${card.rarity}${playable ? '' : ' unplayable'}`;
+      cardEl.className = `card card-enter rarity-${card.rarity}${playable ? '' : ' unplayable'}`;
+      cardEl.style.animationDelay = `${i * 40}ms`;
       cardEl.innerHTML = `
         <div class="card-cost">${card.cost}</div>
         <div class="card-name">${card.name}</div>
@@ -251,7 +265,7 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
         renderAll();
       });
       el.hand.appendChild(cardEl);
-    }
+    });
   }
 
   function showOutcome(result) {

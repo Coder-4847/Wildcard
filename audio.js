@@ -1,5 +1,7 @@
 // Tiny Web Audio synth. No audio files — every sound is generated at call time.
 
+import { getSettings } from './engine/settings.js';
+
 let ctx = null;
 function getCtx() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -52,10 +54,16 @@ const SOUNDS = {
   lose: () => {
     [392, 349, 293, 220].forEach((f, i) => tone({ freq: f, duration: 0.3, type: 'sawtooth', gain: 0.13, delay: i * 0.12 }));
   },
+  coin: () => { tone({ freq: 988, duration: 0.08, type: 'square', gain: 0.1 }); tone({ freq: 1319, duration: 0.12, type: 'square', gain: 0.09, delay: 0.05 }); },
+  relic: () => {
+    [660, 880, 1100, 1320].forEach((f, i) => tone({ freq: f, duration: 0.16, type: 'triangle', gain: 0.1, delay: i * 0.06 }));
+  },
+  death: () => { noiseBurst({ duration: 0.3, gain: 0.15 }); tone({ freq: 220, duration: 0.4, type: 'sawtooth', gain: 0.13, slideTo: 40 }); },
 };
 
 export function playSound(name) {
   try {
+    if (getSettings().muted) return;
     const fn = SOUNDS[name];
     if (fn) fn();
   } catch (e) {

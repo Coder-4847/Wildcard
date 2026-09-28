@@ -1,13 +1,14 @@
 import { playSound, unlockAudio } from '../audio.js';
 import { loadRun, clearRun } from '../engine/run.js';
 
-export function renderTitle(app, { onContinueRun, onNewRun }) {
+export function renderTitle(app, { onContinueRun, onNewRun, onHowToPlay, onSettings }) {
   app.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'title-screen';
   const savedRun = loadRun();
 
   screen.innerHTML = `
+    <button class="icon-btn title-settings-btn" id="btn-settings" title="Settings">⚙️</button>
     <div class="title-cards">
       <div class="title-card-deco"></div>
       <div class="title-card-deco"></div>
@@ -20,6 +21,7 @@ export function renderTitle(app, { onContinueRun, onNewRun }) {
     <div class="title-buttons">
       ${savedRun ? '<button class="btn btn-green" id="btn-continue">Continue Run</button>' : ''}
       <button class="btn ${savedRun ? 'btn-red' : 'btn-green'}" id="btn-new">${savedRun ? 'Abandon & New Run' : 'Start Run'}</button>
+      <button class="btn btn-blue" id="btn-how-to-play">How to Play</button>
     </div>
   `;
   app.appendChild(screen);
@@ -38,5 +40,17 @@ export function renderTitle(app, { onContinueRun, onNewRun }) {
     playSound('click');
     clearRun();
     onNewRun();
+  });
+
+  screen.querySelector('#btn-how-to-play').addEventListener('click', () => {
+    unlockAudio();
+    playSound('click');
+    onHowToPlay();
+  });
+
+  screen.querySelector('#btn-settings').addEventListener('click', () => {
+    unlockAudio();
+    playSound('click');
+    onSettings();
   });
 }

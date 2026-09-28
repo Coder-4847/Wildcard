@@ -132,6 +132,8 @@ function simulateFight(run, node, stats) {
     return true;
   }
   stats.deaths[state.enemy.name] = (stats.deaths[state.enemy.name] || 0) + 1;
+  stats.deathsByAct[run.act] = stats.deathsByAct[run.act] || {};
+  stats.deathsByAct[run.act][state.enemy.name] = (stats.deathsByAct[run.act][state.enemy.name] || 0) + 1;
   return false;
 }
 
@@ -171,7 +173,7 @@ function main() {
   const stats = {
     wins: 0, losses: 0, errors: [],
     actsReached: [], floorsReached: [], goldFinal: [], deckSizes: [], relicCounts: [],
-    battleTurns: [], deaths: {},
+    battleTurns: [], deaths: {}, deathsByAct: {},
   };
 
   for (let i = 0; i < NUM_RUNS; i++) {
@@ -206,6 +208,16 @@ function main() {
   if (deathEntries.length) {
     console.log('\nDeaths by enemy:');
     for (const [name, count] of deathEntries) console.log(`  ${name}: ${count}`);
+  }
+
+  const actKeys = Object.keys(stats.deathsByAct).sort();
+  if (actKeys.length) {
+    console.log('\nDeaths by act:');
+    for (const act of actKeys) {
+      const total = Object.values(stats.deathsByAct[act]).reduce((a, b) => a + b, 0);
+      const top = Object.entries(stats.deathsByAct[act]).sort((a, b) => b[1] - a[1]);
+      console.log(`  Act ${act}: ${total} deaths — ${top.map(([n, c]) => `${n} x${c}`).join(', ')}`);
+    }
   }
 
   if (stats.errors.length) {

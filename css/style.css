@@ -48,7 +48,11 @@ html, body {
   background:
     radial-gradient(ellipse at 50% -10%, #4a3597 0%, transparent 60%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
+#app.screen-fade-out { opacity: 0; }
+:root.reduce-motion #app.screen-fade-out { opacity: 1; transition: none; }
 
 button {
   font-family: var(--font-display);
@@ -110,6 +114,33 @@ button {
   justify-content: center;
   gap: 2.5rem;
   padding: 1rem;
+  overflow-y: auto;
+}
+
+@media (max-height: 420px) {
+  .title-screen { gap: 1rem; }
+  .title-buttons { gap: 0.5rem; }
+  .title-cards { transform: scale(0.7); margin-bottom: -1rem; }
+}
+
+.icon-btn {
+  font-size: 1.3rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid var(--outline);
+  background: var(--panel);
+  box-shadow: 0 3px 0 var(--outline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--outline); }
+.title-settings-btn {
+  position: absolute;
+  top: max(0.6rem, env(safe-area-inset-top, 0px));
+  right: 0.6rem;
 }
 
 .title-logo {
@@ -438,6 +469,11 @@ button {
 @keyframes card-play {
   to { transform: translateY(-140px) scale(0.7); opacity: 0; }
 }
+.card.card-enter { animation: card-enter 0.25s ease backwards; }
+@keyframes card-enter {
+  from { transform: translateY(30px) scale(0.85); opacity: 0; }
+}
+:root.reduce-motion .card.card-enter { animation: none; }
 
 .card-cost {
   position: absolute;
@@ -493,6 +529,7 @@ button {
   z-index: 20;
   padding: 1rem;
   text-align: center;
+  overflow-y: auto;
 }
 .overlay-title {
   font-family: var(--font-display);
@@ -661,6 +698,12 @@ button {
   font-size: 0.85rem;
   padding: 0.4em 0.9em;
 }
+.hud-settings-btn {
+  width: 34px;
+  height: 34px;
+  font-size: 1rem;
+  flex: 0 0 auto;
+}
 
 /* ==== MAP SCREEN ==== */
 .map-screen {
@@ -804,6 +847,77 @@ button {
   margin-top: 0.15rem;
 }
 
+/* ==== TUTORIAL SCREEN ==== */
+.tutorial-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+.tutorial-icon { font-size: 3rem; }
+.tutorial-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 5.5vw, 2rem);
+  color: var(--gold);
+}
+.tutorial-text {
+  color: var(--text-dim);
+  max-width: 480px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.tutorial-dots {
+  display: flex;
+  gap: 6px;
+  margin: 0.4rem 0;
+}
+.tutorial-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--panel-light);
+  border: 2px solid var(--outline);
+}
+.tutorial-dot.active { background: var(--gold); }
+.tutorial-buttons {
+  display: flex;
+  gap: 0.8rem;
+}
+
+/* ==== SETTINGS SCREEN ==== */
+.settings-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 320px;
+  background: var(--panel);
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+}
+.settings-row .btn {
+  font-size: 0.85rem;
+  padding: 0.4em 1em;
+  min-width: 90px;
+}
+
 /* ==== EVENT SCREEN ==== */
 .event-screen {
   position: absolute;
@@ -848,6 +962,14 @@ button {
   padding: 0.8rem 1.2rem;
   min-width: 220px;
 }
+.summary-detail {
+  display: none;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center;
+  max-width: 90vw;
+}
+.summary-detail.show { display: flex; }
 .summary-row {
   display: flex;
   justify-content: space-between;
@@ -861,6 +983,8 @@ button {
   color: var(--gold);
   font-size: 1rem;
   margin-top: -0.8rem;
+  animation: pop-in 0.35s ease backwards;
+  animation-delay: 0.1s;
 }
 .reward-relic {
   font-size: 0.85rem;
@@ -871,10 +995,28 @@ button {
   padding: 0.4rem 0.8rem;
   max-width: 420px;
   text-align: center;
+  animation: pop-in 0.4s ease backwards;
+  animation-delay: 0.25s;
 }
 .reward-relic strong { color: var(--gold); }
+
+@keyframes pop-in {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+:root.reduce-motion .reward-gold,
+:root.reduce-motion .reward-relic { animation: none; }
 
 /* small screens: tighten */
 @media (max-width: 420px) {
   .hand-scroll { gap: 0; }
 }
+
+/* ==== reduce motion (settings toggle) ==== */
+:root.reduce-motion .battle-arena.shake { animation: none; }
+:root.reduce-motion .title-logo { animation: none; }
+:root.reduce-motion .map-node.state-available .node-circle { animation: none; }
+:root.reduce-motion .char-sprite.hit,
+:root.reduce-motion .char-sprite.attack-anim,
+:root.reduce-motion .card.playing { animation-duration: 0.01s; }

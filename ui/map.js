@@ -22,7 +22,7 @@ function nodeY(node, maxFloor) {
   return PAD + (maxFloor - node.floor) * FLOOR_HEIGHT;
 }
 
-export function renderMap(app, { run, onEnterNode, onOpenDeck }) {
+export function renderMap(app, { run, onEnterNode, onOpenDeck, onSettings }) {
   app.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'map-screen';
@@ -70,6 +70,7 @@ export function renderMap(app, { run, onEnterNode, onOpenDeck }) {
       <div class="hud-stat hud-gold">💰 ${run.gold}</div>
       ${relicIcons ? `<div class="hud-relics">${relicIcons}</div>` : ''}
       <button class="btn btn-blue hud-deck-btn" id="btn-hud-deck">Deck (${run.deck.length})</button>
+      <button class="icon-btn hud-settings-btn" id="btn-hud-settings" title="Settings">⚙️</button>
     </div>
     <div class="map-scroll" id="map-scroll">${svg}</div>
   `;
@@ -85,6 +86,10 @@ export function renderMap(app, { run, onEnterNode, onOpenDeck }) {
   screen.querySelector('#btn-hud-deck').addEventListener('click', () => {
     playSound('click');
     onOpenDeck();
+  });
+  screen.querySelector('#btn-hud-settings').addEventListener('click', () => {
+    playSound('click');
+    onSettings();
   });
 
   // scroll to the player's current position (floor 0 is at the bottom)

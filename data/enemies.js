@@ -213,7 +213,7 @@ export const ENEMIES = [
   {
     id: 'ringmaster',
     name: 'The Ringmaster',
-    maxHp: 75,
+    maxHp: 68,
     icon: '🎩',
     tier: 'boss',
     act: 1,
@@ -231,19 +231,19 @@ export const ENEMIES = [
   {
     id: 'puppeteer',
     name: 'The Puppeteer',
-    maxHp: 105,
+    maxHp: 95,
     icon: '🎭',
     tier: 'boss',
     act: 2,
     pattern: [
-      { effects: [{ type: 'status', status: 'bleed', value: 4, target: 'opponent' }] },
-      { effects: [{ type: 'status', status: 'bleed', value: 4, target: 'opponent' }] },
-      { effects: [{ type: 'damage', value: 10, target: 'opponent' }] },
+      { effects: [{ type: 'status', status: 'bleed', value: 3, target: 'opponent' }] },
+      { effects: [{ type: 'status', status: 'bleed', value: 3, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 9, target: 'opponent' }] },
       { effects: [
-        { type: 'status', status: 'weak', value: 3, target: 'opponent' },
-        { type: 'status', status: 'vulnerable', value: 3, target: 'opponent' },
+        { type: 'status', status: 'weak', value: 2, target: 'opponent' },
+        { type: 'status', status: 'vulnerable', value: 2, target: 'opponent' },
       ] },
-      { effects: [{ type: 'damage', value: 16, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 13, target: 'opponent' }] },
     ],
   },
   {

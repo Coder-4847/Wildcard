@@ -8,6 +8,9 @@ import { renderEvent } from './ui/event.js';
 import { renderDeckView } from './ui/deckView.js';
 import { renderRunSummary } from './ui/runSummary.js';
 import { renderActTransition } from './ui/actTransition.js';
+import { renderTutorial } from './ui/tutorial.js';
+import { renderSettings, applySettingsToDocument } from './ui/settings.js';
+import { hasSeenTutorial, markTutorialSeen } from './engine/settings.js';
 import {
   createRun, getNode, completeNode, applyGold, addCardToDeck, removeCardFromDeck,
   upgradeCardInDeck, healPercent, setPlayerHp, battleParamsForNode, randomGold,
@@ -18,12 +21,33 @@ import {
 const app = document.getElementById('app');
 let run = null;
 
+// Every screen switch routes through here so transitions apply uniformly without
+// touching each ui/*.js file: fade #app out, swap its content, fade back in.
+const TRANSITION_MS = 150;
+function show(renderFn) {
+  app.classList.add('screen-fade-out');
+  setTimeout(() => {
+    renderFn();
+    app.classList.remove('screen-fade-out');
+  }, TRANSITION_MS);
+}
+
 function showTitle() {
   run = null;
-  renderTitle(app, {
+  show(() => renderTitle(app, {
     onContinueRun: (savedRun) => { run = savedRun; showMap(); },
     onNewRun: () => { run = createRun(); showMap(); },
-  });
+    onHowToPlay: () => showTutorial(showTitle),
+    onSettings: () => showSettings(showTitle),
+  }));
+}
+
+function showTutorial(onDone) {
+  show(() => renderTutorial(app, { onDone }));
+}
+
+function showSettings(onBack) {
+  show(() => renderSettings(app, { onBack }));
 }
 
 function showMap() {
@@ -31,52 +55,53 @@ function showMap() {
     showRunSummary();
     return;
   }
-  renderMap(app, {
+  show(() => renderMap(app, {
     run,
     onEnterNode: (nodeId) => enterNode(nodeId),
     onOpenDeck: () => showDeckView(),
-  });
+    onSettings: () => showSettings(showMap),
+  }));
 }
 
 function showDeckView() {
-  renderDeckView(app, { deck: run.deck, relics: run.relics, onBack: () => showMap() });
+  show(() => renderDeckView(app, { deck: run.deck, relics: run.relics, onBack: () => showMap() }));
 }
 
 function enterNode(nodeId) {
   const node = getNode(run, nodeId);
   if (node.type === 'rest') {
-    renderRest(app, {
+    show(() => renderRest(app, {
       run,
       onHeal: () => { healPercent(run, 0.3); completeNode(run, nodeId); showMap(); },
       onUpgrade: (deckIndex) => { upgradeCardInDeck(run, deckIndex); completeNode(run, nodeId); showMap(); },
-    });
+    }));
     return;
   }
   if (node.type === 'shop') {
-    renderShop(app, {
+    show(() => renderShop(app, {
       run,
       onBuyCard: (cardId, price) => { applyGold(run, -price); addCardToDeck(run, cardId); },
       onRemoveCard: (deckIndex, price) => { applyGold(run, -price); removeCardFromDeck(run, deckIndex); },
       onLeave: () => { completeNode(run, nodeId); showMap(); },
-    });
+    }));
     return;
   }
   if (node.type === 'event') {
-    renderEvent(app, {
+    show(() => renderEvent(app, {
       run,
       onChoose: (effects) => {
         applyEventEffects(run, effects);
         completeNode(run, nodeId);
         showMap();
       },
-    });
+    }));
     return;
   }
   // fight, elite, boss
   const params = battleParamsForNode(run, node);
   const goldEarned = Math.round(randomGold(params.goldReward) * getGoldMultiplier(run));
   const relicMods = getRelicBattleModifiers(run);
-  renderBattle(app, {
+  show(() => renderBattle(app, {
     deckIds: run.deck,
     enemyId: params.enemyId,
     playerMaxHp: run.maxHp,
@@ -101,42 +126,48 @@ function enterNode(nodeId) {
         completeNode(run, nodeId);
 
         if (node.type === 'boss' && run.status === 'active' && run.act > actBefore) {
-          renderReward(app, {
+          show(() => renderReward(app, {
             goldEarned, relicWon,
             onPick: (cardId) => { addCardToDeck(run, cardId); showActTransition(actBefore); },
             onSkip: () => showActTransition(actBefore),
-          });
+          }));
         } else if (node.type === 'boss') {
           showMap(); // run.status is now 'won'; showMap redirects to the summary
         } else {
-          renderReward(app, {
+          show(() => renderReward(app, {
             goldEarned, relicWon,
             onPick: (cardId) => { addCardToDeck(run, cardId); showMap(); },
             onSkip: () => showMap(),
-          });
+          }));
         }
       } else {
         showMap(); // run.status is now 'lost'; showMap redirects to the summary
       }
     },
-  });
+  }));
 }
 
 function showActTransition(completedAct) {
-  renderActTransition(app, {
+  show(() => renderActTransition(app, {
     completedAct,
     nextAct: run.act,
     onContinue: () => showMap(),
-  });
+  }));
 }
 
 function showRunSummary() {
   const won = run.status === 'won';
-  renderRunSummary(app, {
+  show(() => renderRunSummary(app, {
     run,
     won,
     onNewRun: () => { run = createRun(); showMap(); },
-  });
+  }));
 }
 
-showTitle();
+applySettingsToDocument();
+if (hasSeenTutorial()) {
+  showTitle();
+} else {
+  markTutorialSeen();
+  renderTutorial(app, { onDone: showTitle });
+}
