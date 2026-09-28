@@ -47,7 +47,7 @@ export function renderShop(app, { run, onBuyCard, onRemoveCard, onLeave }) {
       const card = entry.card;
       const cardEl = document.createElement('div');
       const affordable = run.gold >= entry.price;
-      cardEl.className = `card rarity-${card.rarity}${entry.sold ? ' unplayable' : ''}${!entry.sold && !affordable ? ' unplayable' : ''}`;
+      cardEl.className = `card rarity-${card.rarity} type-${card.type}${entry.sold ? ' unplayable' : ''}${!entry.sold && !affordable ? ' unplayable' : ''}`;
       cardEl.innerHTML = `
         <div class="card-cost">${card.cost}</div>
         <div class="card-name">${card.name}</div>
@@ -83,7 +83,7 @@ export function renderShop(app, { run, onBuyCard, onRemoveCard, onLeave }) {
       const card = getCard(cardId);
       const cardEl = document.createElement('div');
       const affordable = run.gold >= REMOVE_PRICE;
-      cardEl.className = `card rarity-${card.rarity}${affordable ? '' : ' unplayable'}`;
+      cardEl.className = `card rarity-${card.rarity} type-${card.type}${affordable ? '' : ' unplayable'}`;
       cardEl.innerHTML = `
         <div class="card-cost">${card.cost}</div>
         <div class="card-name">${card.name}</div>

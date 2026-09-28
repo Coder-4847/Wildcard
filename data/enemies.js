@@ -5,6 +5,7 @@
 // `tier` is 'normal', 'elite' or 'boss'. Normal and elite enemies are a shared roster used
 // across all 3 acts; engine/run.js scales their HP/damage up by act. Each boss belongs to
 // exactly one act (`act: 1|2|3`) and is not scaled further.
+// `color` is the enemy's sprite theme color (ui/battle.js sets it as a CSS custom property).
 
 export const ENEMIES = [
   // ---- normal (12) ----
@@ -13,6 +14,7 @@ export const ENEMIES = [
     name: 'Slime',
     maxHp: 42,
     icon: '🟢',
+    color: '#6bcf4f',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'damage', value: 8, target: 'opponent' }] },
@@ -25,6 +27,7 @@ export const ENEMIES = [
     name: 'Goblin',
     maxHp: 38,
     icon: '👺',
+    color: '#7a8f3f',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'damage', value: 9, target: 'opponent' }] },
@@ -37,6 +40,7 @@ export const ENEMIES = [
     name: 'Fanged Rat',
     maxHp: 34,
     icon: '🐀',
+    color: '#9c8468',
     tier: 'normal',
     pattern: [
       { effects: [
@@ -52,6 +56,7 @@ export const ENEMIES = [
     name: 'Shieldbearer',
     maxHp: 48,
     icon: '🛡️',
+    color: '#8a97a8',
     tier: 'normal',
     pattern: [
       { effects: [
@@ -67,6 +72,7 @@ export const ENEMIES = [
     name: 'Hexweaver',
     maxHp: 40,
     icon: '🧙',
+    color: '#8a4fd9',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'status', status: 'weak', value: 2, target: 'opponent' }] },
@@ -80,6 +86,7 @@ export const ENEMIES = [
     name: 'Brute',
     maxHp: 50,
     icon: '👹',
+    color: '#b35a3a',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'damage', value: 12, target: 'opponent' }] },
@@ -92,6 +99,7 @@ export const ENEMIES = [
     name: 'Spitting Toad',
     maxHp: 30,
     icon: '🐸',
+    color: '#5a9142',
     tier: 'normal',
     pattern: [
       { effects: [
@@ -110,6 +118,7 @@ export const ENEMIES = [
     name: 'Bandit',
     maxHp: 36,
     icon: '🗡️',
+    color: '#6b4a35',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'damage', value: 5, hits: 2, target: 'opponent' }] },
@@ -122,6 +131,7 @@ export const ENEMIES = [
     name: 'Crow',
     maxHp: 26,
     icon: '🐦‍⬛',
+    color: '#4a4a5c',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'damage', value: 3, hits: 3, target: 'opponent' }] },
@@ -133,6 +143,7 @@ export const ENEMIES = [
     name: 'Cultist',
     maxHp: 32,
     icon: '🕯️',
+    color: '#8a2a3a',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'status', status: 'bleed', value: 3, target: 'opponent' }] },
@@ -145,6 +156,7 @@ export const ENEMIES = [
     name: 'Bomber',
     maxHp: 34,
     icon: '💣',
+    color: '#c9702a',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'block', value: 6, target: 'self' }] },
@@ -156,6 +168,7 @@ export const ENEMIES = [
     name: 'Wisp',
     maxHp: 28,
     icon: '🔵',
+    color: '#4fc3e8',
     tier: 'normal',
     pattern: [
       { effects: [{ type: 'status', status: 'vulnerable', value: 2, target: 'opponent' }] },
@@ -170,6 +183,7 @@ export const ENEMIES = [
     name: 'Iron Colossus',
     maxHp: 65,
     icon: '🗿',
+    color: '#6a6a7a',
     tier: 'elite',
     pattern: [
       { effects: [
@@ -185,6 +199,7 @@ export const ENEMIES = [
     name: 'Plague Bringer',
     maxHp: 58,
     icon: '🧟',
+    color: '#8a9a3f',
     tier: 'elite',
     pattern: [
       { effects: [
@@ -201,6 +216,7 @@ export const ENEMIES = [
     name: 'Twin Blades',
     maxHp: 52,
     icon: '⚔️',
+    color: '#c9333f',
     tier: 'elite',
     pattern: [
       { effects: [{ type: 'damage', value: 5, hits: 3, target: 'opponent' }] },
@@ -215,6 +231,7 @@ export const ENEMIES = [
     name: 'The Ringmaster',
     maxHp: 68,
     icon: '🎩',
+    color: '#d9a83a',
     tier: 'boss',
     act: 1,
     pattern: [
@@ -233,6 +250,7 @@ export const ENEMIES = [
     name: 'The Puppeteer',
     maxHp: 95,
     icon: '🎭',
+    color: '#7a3aa8',
     tier: 'boss',
     act: 2,
     pattern: [
@@ -251,6 +269,7 @@ export const ENEMIES = [
     name: 'The Ringleader',
     maxHp: 130,
     icon: '👑',
+    color: '#a83a6a',
     tier: 'boss',
     act: 3,
     pattern: [

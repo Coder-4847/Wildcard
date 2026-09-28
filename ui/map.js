@@ -54,6 +54,8 @@ export function renderMap(app, { run, onEnterNode, onOpenDeck, onSettings }) {
     const r = node.type === 'boss' ? 34 : 26;
     svg += `
       <g class="map-node ${meta.cls} state-${state}${isCurrent ? ' current' : ''}" data-node-id="${node.id}" transform="translate(${nodeX(node)},${nodeY(node, maxFloor)})">
+        <ellipse class="node-shadow" cx="2" cy="${r * 0.75}" rx="${r * 0.85}" ry="${r * 0.3}" />
+        <circle r="${r + 5}" class="node-ring" />
         <circle r="${r}" class="node-circle" />
         <text class="node-icon" text-anchor="middle" dominant-baseline="central">${meta.icon}</text>
       </g>`;

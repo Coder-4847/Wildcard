@@ -52,7 +52,7 @@ export function renderRunSummary(app, { run, won, onNewRun }) {
       for (const cardId of run.deck) {
         const card = getCard(cardId);
         const cardEl = document.createElement('div');
-        cardEl.className = `card rarity-${card.rarity}${card.upgraded ? ' card-upgraded' : ''}`;
+        cardEl.className = `card rarity-${card.rarity} type-${card.type}${card.upgraded ? ' card-upgraded' : ''}`;
         cardEl.innerHTML = `
           <div class="card-cost">${card.cost}</div>
           <div class="card-name">${card.name}</div>

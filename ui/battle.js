@@ -1,4 +1,5 @@
 import { getCard } from '../data/cards.js';
+import { getEnemy } from '../data/enemies.js';
 import { createBattle, playCard, endPlayerTurn, canPlayCard } from '../engine/battle.js';
 import { playSound } from '../audio.js';
 
@@ -43,6 +44,7 @@ function renderStatusBadges(container, statuses) {
 }
 
 export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpMultiplier, dmgMultiplier, onExit }) {
+  const enemyData = getEnemy(enemyId);
   app.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'battle-screen';
@@ -51,8 +53,9 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
     <div class="battle-arena" id="arena">
       <div class="combatant enemy-combatant">
         <div class="intent-bubble" id="enemy-intent"></div>
-        <div class="char-sprite enemy" id="enemy-sprite">
-          <div class="eye-row"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
+        <div class="char-sprite enemy tier-${enemyData.tier}" id="enemy-sprite" style="--sprite-color: ${enemyData.color}">
+          <div class="sprite-shading"></div>
+          <div class="sprite-icon">${enemyData.icon}</div>
           <div class="floater-layer" id="enemy-floaters"></div>
         </div>
         <div class="hp-bar-wrap">
@@ -64,7 +67,12 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
       </div>
       <div class="combatant hero-combatant">
         <div class="char-sprite hero" id="hero-sprite">
-          <div class="eye-row"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
+          <div class="sprite-shading"></div>
+          <div class="jester-hat"><span class="hat-point p1"></span><span class="hat-point p2"></span><span class="hat-point p3"></span></div>
+          <div class="sprite-face">
+            <div class="eye-row"><div class="eye"><div class="pupil"></div></div><div class="eye"><div class="pupil"></div></div></div>
+            <div class="sprite-mouth"></div>
+          </div>
           <div class="floater-layer" id="hero-floaters"></div>
         </div>
         <div class="hp-bar-wrap">
@@ -250,7 +258,7 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
       const card = getCard(instance.id);
       const playable = canPlayCard(state, instance.uid);
       const cardEl = document.createElement('div');
-      cardEl.className = `card card-enter rarity-${card.rarity}${playable ? '' : ' unplayable'}`;
+      cardEl.className = `card card-enter rarity-${card.rarity} type-${card.type}${playable ? '' : ' unplayable'}`;
       cardEl.style.animationDelay = `${i * 40}ms`;
       cardEl.innerHTML = `
         <div class="card-cost">${card.cost}</div>

@@ -49,7 +49,7 @@ export function renderRest(app, { run, onHeal, onUpgrade, onLeave }) {
       if (isUpgraded(cardId)) return;
       const card = getCard(cardId);
       const cardEl = document.createElement('div');
-      cardEl.className = `card rarity-${card.rarity}`;
+      cardEl.className = `card rarity-${card.rarity} type-${card.type}`;
       cardEl.innerHTML = `
         <div class="card-cost">${card.cost}</div>
         <div class="card-name">${card.name}</div>

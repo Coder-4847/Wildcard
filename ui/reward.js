@@ -33,7 +33,7 @@ export function renderReward(app, { goldEarned = 0, relicWon = null, onPick, onS
   const cardsEl = screen.querySelector('#reward-cards');
   for (const card of choices) {
     const cardEl = document.createElement('div');
-    cardEl.className = `card reward-card rarity-${card.rarity}`;
+    cardEl.className = `card reward-card rarity-${card.rarity} type-${card.type}`;
     cardEl.innerHTML = `
       <div class="card-cost">${card.cost}</div>
       <div class="card-name">${card.name}</div>
