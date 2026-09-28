@@ -42,7 +42,7 @@ function renderStatusBadges(container, statuses) {
   }
 }
 
-export function renderBattle(app, { deckIds, enemyId, onExit }) {
+export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpMultiplier, dmgMultiplier, onExit }) {
   app.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'battle-screen';
@@ -111,7 +111,7 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
     endTurnBtn: screen.querySelector('#btn-end-turn'),
   };
 
-  const { state, events } = createBattle({ deckIds, enemyId });
+  const { state, events } = createBattle({ deckIds, enemyId, playerMaxHp, playerHp, hpMultiplier, dmgMultiplier });
   handleEvents(events);
   renderAll();
 
@@ -262,7 +262,7 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
     screen.appendChild(overlay);
     overlay.querySelector('#btn-continue').addEventListener('click', () => {
       playSound('click');
-      onExit(result);
+      onExit(result, state.player.hp);
     });
   }
 }

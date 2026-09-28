@@ -14,22 +14,29 @@ A polished 2D deckbuilder roguelike (Slay the Spire-style) for phone and desktop
 - `index.html` — single entry point, loads `main.js` as a module, holds the `#app` mount point and Google Fonts links.
 - `css/style.css` — all styling. Deep blue-purple backgrounds, gold accents, red for attack, blue for block, green for healing. Thick dark outlines, rounded corners, glossy pressable buttons (lighter top edge, darker bottom edge). Heavy rounded display font for names/numbers with dark text outlines.
 - `audio.js` — Web Audio synth helpers (`playSound(name)` style API). No audio files ever.
-- `data/cards.js` — card definitions (id, name, cost, type, rarity, archetype, description, effects[], upgraded variant).
-- `data/enemies.js` — enemy definitions (id, name, maxHp, intent pattern/AI).
-- `data/relics.js` — (from M2+) relic definitions.
-- `data/events.js` — (from M3+) mystery event definitions.
-- `engine/battle.js` — battle state machine: draw/discard/energy, playing cards, effect execution, enemy AI turn resolution, statuses. Pure logic, no DOM.
-- `engine/run.js` — (from M3+) run/map state, node graph, save/resume.
-- `engine/map.js` — (from M3+) branching map generation.
-- `ui/title.js` — title screen.
+- `data/cards.js` — card definitions (id, name, cost, type, rarity, archetype, description, effects[]). `getCard('id+')` synthesizes the upgraded form generically (see below) — upgrades are not hand-authored per card.
+- `data/enemies.js` — enemy definitions (id, name, maxHp, intent pattern/AI, `tier`, `eliteEligible`). `getNormalEnemyPool()` / `getEliteEnemyPool()` / `getBossId()` are the map's enemy-selection helpers.
+- `data/relics.js` — (from M4) relic definitions.
+- `data/events.js` — (from M4) mystery event definitions.
+- `engine/battle.js` — battle state machine: draw/discard/energy, playing cards, effect execution, enemy AI turn resolution, statuses. Pure logic, no DOM. `createBattle` takes `playerHp` (carried over between fights) and `hpMultiplier`/`dmgMultiplier` (elite/boss scaling) without mutating the base enemy data.
+- `engine/map.js` — pure branching-map generator (`generateAct()`): floors of lane-positioned nodes with guaranteed connectivity from every start node to the boss. No pixel coordinates — `ui/map.js` computes those.
+- `engine/run.js` — run state: deck/gold/HP/map progress, node resolution (`completeNode`), and localStorage save/load (`saveRun`/`loadRun`/`clearRun`). Mid-fight progress is never saved — only completed nodes commit.
+- `ui/title.js` — title screen; shows "Continue Run" when an active save exists.
 - `ui/battle.js` — renders the battle screen from `engine/battle.js` state and wires up taps/clicks.
 - `ui/reward.js` — post-battle "choose 1 of 3 cards or skip" screen.
-- `ui/enemySelect.js` — **temporary** "choose your fight" screen standing in for the real map until M3 lands. Also shows the current run deck.
-- `main.js` — app entry point; simple screen router that mounts/unmounts screens into `#app`. Currently holds an in-memory `currentDeck` that persists across fights and resets to the starter deck on loss or return to title — this will be replaced by `engine/run.js` + save/resume in M3.
+- `ui/map.js` — renders the branching map as inline SVG (nodes + connecting edges) with a persistent HP/gold HUD.
+- `ui/rest.js` — rest site: heal 30% max HP or permanently upgrade one deck card.
+- `ui/shop.js` — basic shop: buy from 4 random cards (priced by rarity) or pay to remove a card from the deck.
+- `ui/deckView.js` — read-only full-deck viewer, opened from the map HUD.
+- `ui/runSummary.js` — end-of-run screen (Act clear or death) with floors reached / deck size / gold, and a "New Run" button.
+- `main.js` — app entry point and screen router; owns the single `run` object and passes it to each screen.
 
 ## Known scope notes for future milestones
 - Battles are 1-vs-1 only (`state.enemy` is a single object, not an array). If Act maps need multi-enemy fights, `engine/battle.js` will need `state.enemies: []` and effect targeting will need to support picking a specific enemy — treat that as a deliberate refactor, not a patch.
-- Cards do not yet have upgraded variants. Add an `upgraded` field/variant to `data/cards.js` entries when rest-site upgrades are implemented (M3).
+- Only Act 1 exists (`engine/map.js` always generates one act, `main.js`/`engine/run.js` have no act-transition logic). Acts 2-3 and their bosses are M4 work: `generateAct()` will need an act number to pick different boss/enemy pools, and `run.js` needs an "advance to next act" step instead of ending the run at the Act-1 boss.
+- Elites reuse the 3 toughest normal enemies scaled up (`ELITE_HP_MULTIPLIER`/`ELITE_DMG_MULTIPLIER` in `engine/run.js`) rather than having dedicated elite data. Give elites their own `data/enemies.js` entries in M4 when the full 12/3/3 roster is built.
+- Mystery events (the 5th node type from the design brief) are not implemented — `engine/map.js` only generates fight/elite/rest/shop/boss. Add `'event'` to the weighted type pool and `data/events.js` + `ui/event.js` in M4.
+- Relics are not implemented yet; `run` has no relics field. Add it alongside `data/relics.js` in M4.
 
 ## Game design reference
 
@@ -62,7 +69,7 @@ Work one milestone at a time, commit + push, then stop and report to the user be
 - M0 (~$2): skeleton, title screen. DONE.
 - M1 (~$15): one playable battle vs one enemy with the starter deck (draw/discard, energy, block, intents, win/lose). DONE.
 - M2 (~$15): 5 statuses, card effect system, 30 cards, 6 enemies, card reward screen. DONE.
-- M3 (~$15): branching map, full Act 1 run loop, rest sites, basic shop, save/resume, first boss.
+- M3 (~$15): branching map, full Act 1 run loop, rest sites, basic shop, save/resume, first boss. DONE.
 - M4 (~$15): content complete — 60 cards, all enemies, 3 acts, 3 bosses, relics, events, headless auto-play script for crash/balance testing.
 - M5 (~$25): polish — animations, sound, screen shake, transitions, tutorial, settings, run summary, balance tuning.
 - M6 (~$10): bug fixing, mobile testing fixes, final deployment.

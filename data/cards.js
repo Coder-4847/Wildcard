@@ -270,7 +270,46 @@ export const CARDS = [
   },
 ];
 
+// Upgrading is generic, not hand-authored: effects with a flat positive value get
+// stronger (damage/block/status/draw/energy), and cards that only scale off a stat
+// (value 0, e.g. Counter Stance) get cheaper instead. Card ids ending in '+' are the
+// upgraded form of the base id and are synthesized on lookup, not stored in CARDS.
+function upgradeCard(base) {
+  const bumpable = base.effects.filter((e) => typeof e.value === 'number' && e.value > 0);
+  let cost = base.cost;
+  let effects;
+  if (bumpable.length > 0) {
+    effects = base.effects.map((e) => {
+      if (typeof e.value === 'number' && e.value > 0) {
+        return { ...e, value: e.value + Math.max(1, Math.ceil(e.value * 0.3)) };
+      }
+      return { ...e };
+    });
+  } else {
+    effects = base.effects.map((e) => ({ ...e }));
+    cost = Math.max(0, base.cost - 1);
+  }
+
+  let description = base.description;
+  if (bumpable.length > 0) {
+    const newValues = effects.filter((e) => typeof e.value === 'number' && e.value > 0).map((e) => e.value);
+    let i = 0;
+    description = base.description.replace(/\d+/g, () => (i < newValues.length ? String(newValues[i++]) : ''));
+  }
+
+  return { ...base, id: `${base.id}+`, name: `${base.name}+`, cost, description, effects, upgraded: true };
+}
+
+export function isUpgraded(id) {
+  return id.endsWith('+');
+}
+
 export function getCard(id) {
+  if (id.endsWith('+')) {
+    const base = CARDS.find((c) => c.id === id.slice(0, -1));
+    if (!base) throw new Error(`Unknown card id: ${id}`);
+    return upgradeCard(base);
+  }
   const card = CARDS.find((c) => c.id === id);
   if (!card) throw new Error(`Unknown card id: ${id}`);
   return card;

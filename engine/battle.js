@@ -39,12 +39,21 @@ function computeIntent(enemy) {
   return enemy.pattern[enemy.patternIndex % enemy.pattern.length];
 }
 
-export function createBattle({ deckIds, playerMaxHp = 70, enemyId }) {
+function scalePattern(pattern, dmgMultiplier) {
+  if (dmgMultiplier === 1) return pattern;
+  return pattern.map((intent) => ({
+    effects: intent.effects.map((e) => (
+      e.type === 'damage' ? { ...e, value: Math.round(e.value * dmgMultiplier) } : { ...e }
+    )),
+  }));
+}
+
+export function createBattle({ deckIds, playerMaxHp = 70, playerHp = null, enemyId, hpMultiplier = 1, dmgMultiplier = 1 }) {
   const enemyData = getEnemy(enemyId);
   const state = {
     player: {
       maxHp: playerMaxHp,
-      hp: playerMaxHp,
+      hp: playerHp === null ? playerMaxHp : playerHp,
       block: 0,
       statuses: freshStatuses(),
       energy: PLAYER_MAX_ENERGY,
@@ -58,11 +67,11 @@ export function createBattle({ deckIds, playerMaxHp = 70, enemyId }) {
       id: enemyData.id,
       name: enemyData.name,
       icon: enemyData.icon,
-      maxHp: enemyData.maxHp,
-      hp: enemyData.maxHp,
+      maxHp: Math.round(enemyData.maxHp * hpMultiplier),
+      hp: Math.round(enemyData.maxHp * hpMultiplier),
       block: 0,
       statuses: freshStatuses(),
-      pattern: enemyData.pattern,
+      pattern: scalePattern(enemyData.pattern, dmgMultiplier),
       patternIndex: 0,
       intent: null,
     },

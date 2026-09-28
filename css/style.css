@@ -632,6 +632,165 @@ button {
   padding: 0.1rem 0;
 }
 
+/* ==== RUN HUD (map/shop) ==== */
+.run-hud {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0.8rem;
+  flex: 0 0 auto;
+}
+.hud-stat {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  background: var(--panel);
+  border: 2px solid var(--outline);
+  border-radius: 10px;
+  padding: 0.2rem 0.6rem;
+}
+.hud-hp { color: var(--red); }
+.hud-gold { color: var(--gold); }
+.hud-deck-btn {
+  margin-left: auto;
+  font-size: 0.85rem;
+  padding: 0.4em 0.9em;
+}
+
+/* ==== MAP SCREEN ==== */
+.map-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.map-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+}
+.map-edge {
+  stroke-width: 4;
+}
+.edge-dim { stroke: rgba(199, 192, 230, 0.18); }
+.edge-active { stroke: var(--gold); stroke-width: 5; }
+.edge-visited { stroke: var(--text-dim); opacity: 0.5; }
+
+.map-node .node-circle {
+  fill: var(--panel);
+  stroke: var(--outline);
+  stroke-width: 4;
+}
+.map-node .node-icon {
+  font-size: 22px;
+  transform: translateY(1px);
+}
+.map-node.state-locked { opacity: 0.35; }
+.map-node.state-visited .node-circle { fill: #241a44; }
+.map-node.state-available { cursor: pointer; }
+.map-node.state-available .node-circle {
+  filter: drop-shadow(0 0 8px var(--gold));
+  animation: node-pulse 1.6s ease-in-out infinite;
+}
+.map-node.current .node-circle { stroke: var(--gold); }
+.map-node.node-elite.state-available .node-circle { filter: drop-shadow(0 0 8px var(--purple)); }
+.map-node.node-boss .node-circle { fill: #3a1030; }
+.map-node.node-boss.state-available .node-circle { filter: drop-shadow(0 0 14px var(--gold)); }
+
+@keyframes node-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* ==== REST SCREEN ==== */
+.rest-screen, .shop-screen, .deck-view-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  overflow-y: auto;
+}
+.rest-title, .shop-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  color: var(--gold);
+  margin-top: 0.5rem;
+}
+.rest-choices {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.rest-choice-btn {
+  width: 220px;
+  font-size: 1rem;
+  line-height: 1.4;
+  padding: 1em 0.8em;
+}
+.rest-choice-sub {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-shadow: none;
+}
+.upgrade-grid, .deck-grid {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  max-width: 700px;
+}
+.upgrade-grid.show { display: flex; }
+.deck-grid { display: flex; }
+.upgrade-grid .card, .deck-grid .card { margin-top: 0; cursor: pointer; }
+.card-upgraded { box-shadow: 0 5px 0 var(--outline), 0 0 12px rgba(255,203,61,0.6); }
+
+/* ==== SHOP SCREEN ==== */
+.shop-cards {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.shop-price {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--gold);
+  margin-top: 0.15rem;
+}
+
+/* ==== RUN SUMMARY ==== */
+.run-summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--panel);
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
+  min-width: 220px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+.summary-row span:last-child { color: var(--text); font-family: var(--font-display); }
+
+.reward-gold {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 1rem;
+  margin-top: -0.8rem;
+}
+
 /* small screens: tighten */
 @media (max-width: 420px) {
   .hand-scroll { gap: 0; }
