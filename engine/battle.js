@@ -7,6 +7,7 @@
 //   { type: 'status', value, target: 'self'|'opponent', status: 'might'|'weak'|'vulnerable'|'bleed'|'ward' }
 //   { type: 'draw',   value, target: 'self' }   // player only
 //   { type: 'energy', value, target: 'self' }   // player only
+//   { type: 'heal',   value, target: 'self'|'opponent', scale? }
 // `target` is relative to whoever is acting (the card's player, or the enemy on its turn).
 // `scale` (optional, on damage/block) adds bonus value from a live stat:
 //   { source: 'opponentBleed'|'selfBlock'|'selfWard'|'cardsPlayedThisTurn', multiplier }
@@ -48,7 +49,10 @@ function scalePattern(pattern, dmgMultiplier) {
   }));
 }
 
-export function createBattle({ deckIds, playerMaxHp = 70, playerHp = null, enemyId, hpMultiplier = 1, dmgMultiplier = 1 }) {
+export function createBattle({
+  deckIds, playerMaxHp = 70, playerHp = null, enemyId, hpMultiplier = 1, dmgMultiplier = 1,
+  energyBonus = 0, drawBonus = 0, startBlock = 0, startMight = 0, startWard = 0,
+}) {
   const enemyData = getEnemy(enemyId);
   const state = {
     player: {
@@ -56,8 +60,9 @@ export function createBattle({ deckIds, playerMaxHp = 70, playerHp = null, enemy
       hp: playerHp === null ? playerMaxHp : playerHp,
       block: 0,
       statuses: freshStatuses(),
-      energy: PLAYER_MAX_ENERGY,
-      energyMax: PLAYER_MAX_ENERGY,
+      energy: PLAYER_MAX_ENERGY + energyBonus,
+      energyMax: PLAYER_MAX_ENERGY + energyBonus,
+      drawPerTurn: CARDS_PER_DRAW + drawBonus,
       drawPile: shuffle(deckIds),
       hand: [],
       discard: [],
@@ -82,6 +87,18 @@ export function createBattle({ deckIds, playerMaxHp = 70, playerHp = null, enemy
   state.enemy.intent = computeIntent(state.enemy);
   const events = [];
   startPlayerTurn(state, events);
+  if (startBlock > 0) {
+    state.player.block += startBlock;
+    events.push({ type: 'block', target: 'player', amount: startBlock });
+  }
+  if (startMight > 0) {
+    state.player.statuses.might += startMight;
+    events.push({ type: 'status', target: 'player', status: 'might', amount: startMight });
+  }
+  if (startWard > 0) {
+    state.player.statuses.ward += startWard;
+    events.push({ type: 'status', target: 'player', status: 'ward', amount: startWard });
+  }
   return { state, events };
 }
 
@@ -179,6 +196,11 @@ function applyEffect(effect, ctx, events) {
       ctx.actor.energy += effect.value;
       events.push({ type: 'energyGain', amount: effect.value });
     }
+  } else if (effect.type === 'heal') {
+    const amount = effect.value + getScaleValue(effect.scale, ctx);
+    const healed = Math.max(0, Math.min(amount, targetObj.maxHp - targetObj.hp));
+    targetObj.hp += healed;
+    if (healed > 0) events.push({ type: 'heal', target: targetKey, amount: healed });
   }
 }
 
@@ -190,7 +212,7 @@ function startPlayerTurn(state, events) {
   if (state.outcome) return;
   state.player.energy = state.player.energyMax;
   state.player.cardsPlayedThisTurn = 0;
-  drawCards(state, CARDS_PER_DRAW, events);
+  drawCards(state, state.player.drawPerTurn, events);
   events.push({ type: 'turnStart', who: 'player' });
 }
 

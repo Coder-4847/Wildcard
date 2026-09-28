@@ -176,6 +176,10 @@ export function renderBattle(app, { deckIds, enemyId, playerMaxHp, playerHp, hpM
         const layer = e.target === 'enemy' ? el.enemyFloaters : el.heroFloaters;
         spawnFloater(layer, `+${e.amount}`, 'blk');
         playSound('block');
+      } else if (e.type === 'heal') {
+        const layer = e.target === 'enemy' ? el.enemyFloaters : el.heroFloaters;
+        spawnFloater(layer, `+${e.amount}`, 'heal');
+        playSound('statusBuff');
       } else if (e.type === 'status') {
         const layer = e.target === 'enemy' ? el.enemyFloaters : el.heroFloaters;
         const meta = STATUS_META[e.status];

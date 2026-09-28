@@ -10,8 +10,10 @@ export function renderRunSummary(app, { run, won, onNewRun }) {
     <div class="overlay-title ${won ? 'win' : 'lose'} text-outline">${won ? 'ACT 1 CLEAR!' : 'RUN OVER'}</div>
     ${won ? '<div class="rest-choice-sub">More acts are coming in a future milestone.</div>' : ''}
     <div class="run-summary-stats">
+      <div class="summary-row"><span>Act reached</span><span>${run.act}</span></div>
       <div class="summary-row"><span>Floors reached</span><span>${floorsReached}</span></div>
       <div class="summary-row"><span>Final deck size</span><span>${run.deck.length}</span></div>
+      <div class="summary-row"><span>Relics found</span><span>${run.relics.length}</span></div>
       <div class="summary-row"><span>Gold</span><span>${run.gold}</span></div>
     </div>
     <button class="btn ${won ? 'btn-green' : 'btn-red'}" id="btn-new-run">New Run</button>

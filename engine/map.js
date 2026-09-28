@@ -21,10 +21,11 @@ function pickLanes(count) {
 
 function weightedType() {
   const roll = Math.random();
-  if (roll < 0.55) return 'fight';
-  if (roll < 0.70) return 'elite';
-  if (roll < 0.85) return 'rest';
-  return 'shop';
+  if (roll < 0.45) return 'fight';
+  if (roll < 0.60) return 'elite';
+  if (roll < 0.75) return 'rest';
+  if (roll < 0.87) return 'shop';
+  return 'event';
 }
 
 export function generateAct() {

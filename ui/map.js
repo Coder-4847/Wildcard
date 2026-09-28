@@ -1,4 +1,5 @@
 import { isNodeAvailable } from '../engine/run.js';
+import { getRelic } from '../data/relics.js';
 import { playSound } from '../audio.js';
 
 const LANE_WIDTH = 140;
@@ -10,6 +11,7 @@ const TYPE_META = {
   elite: { icon: '💀', cls: 'node-elite' },
   rest: { icon: '🔥', cls: 'node-rest' },
   shop: { icon: '💰', cls: 'node-shop' },
+  event: { icon: '❓', cls: 'node-event' },
   boss: { icon: '🎩', cls: 'node-boss' },
 };
 
@@ -59,10 +61,14 @@ export function renderMap(app, { run, onEnterNode, onOpenDeck }) {
 
   svg += '</svg>';
 
+  const relicIcons = run.relics.map((id) => `<span class="hud-relic-icon" title="${getRelic(id).name}">${getRelic(id).icon}</span>`).join('');
+
   screen.innerHTML = `
     <div class="run-hud">
+      <div class="hud-stat hud-act">Act ${run.act}</div>
       <div class="hud-stat hud-hp">❤️ ${run.hp}/${run.maxHp}</div>
       <div class="hud-stat hud-gold">💰 ${run.gold}</div>
+      ${relicIcons ? `<div class="hud-relics">${relicIcons}</div>` : ''}
       <button class="btn btn-blue hud-deck-btn" id="btn-hud-deck">Deck (${run.deck.length})</button>
     </div>
     <div class="map-scroll" id="map-scroll">${svg}</div>

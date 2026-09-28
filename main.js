@@ -4,11 +4,15 @@ import { renderReward } from './ui/reward.js';
 import { renderMap } from './ui/map.js';
 import { renderRest } from './ui/rest.js';
 import { renderShop } from './ui/shop.js';
+import { renderEvent } from './ui/event.js';
 import { renderDeckView } from './ui/deckView.js';
 import { renderRunSummary } from './ui/runSummary.js';
+import { renderActTransition } from './ui/actTransition.js';
 import {
   createRun, getNode, completeNode, applyGold, addCardToDeck, removeCardFromDeck,
   upgradeCardInDeck, healPercent, setPlayerHp, battleParamsForNode, randomGold,
+  addRelic, pickRandomUnownedRelic, getRelicBattleModifiers, getGoldMultiplier,
+  getHealOnWinPct, applyEventEffects,
 } from './engine/run.js';
 
 const app = document.getElementById('app');
@@ -35,7 +39,7 @@ function showMap() {
 }
 
 function showDeckView() {
-  renderDeckView(app, { deck: run.deck, onBack: () => showMap() });
+  renderDeckView(app, { deck: run.deck, relics: run.relics, onBack: () => showMap() });
 }
 
 function enterNode(nodeId) {
@@ -57,9 +61,21 @@ function enterNode(nodeId) {
     });
     return;
   }
+  if (node.type === 'event') {
+    renderEvent(app, {
+      run,
+      onChoose: (effects) => {
+        applyEventEffects(run, effects);
+        completeNode(run, nodeId);
+        showMap();
+      },
+    });
+    return;
+  }
   // fight, elite, boss
   const params = battleParamsForNode(run, node);
-  const goldEarned = randomGold(params.goldReward);
+  const goldEarned = Math.round(randomGold(params.goldReward) * getGoldMultiplier(run));
+  const relicMods = getRelicBattleModifiers(run);
   renderBattle(app, {
     deckIds: run.deck,
     enemyId: params.enemyId,
@@ -67,16 +83,34 @@ function enterNode(nodeId) {
     playerHp: run.hp,
     hpMultiplier: params.hpMultiplier,
     dmgMultiplier: params.dmgMultiplier,
+    ...relicMods,
     onExit: (result, finalHp) => {
       setPlayerHp(run, finalHp);
       if (result === 'win') {
         applyGold(run, goldEarned);
+        const healPct = getHealOnWinPct(run);
+        if (healPct > 0) healPercent(run, healPct);
+
+        let relicWon = null;
+        if (Math.random() < params.relicChance) {
+          const relic = pickRandomUnownedRelic(run);
+          if (relic) { addRelic(run, relic.id); relicWon = relic; }
+        }
+
+        const actBefore = run.act;
         completeNode(run, nodeId);
-        if (node.type === 'boss') {
+
+        if (node.type === 'boss' && run.status === 'active' && run.act > actBefore) {
+          renderReward(app, {
+            goldEarned, relicWon,
+            onPick: (cardId) => { addCardToDeck(run, cardId); showActTransition(actBefore); },
+            onSkip: () => showActTransition(actBefore),
+          });
+        } else if (node.type === 'boss') {
           showMap(); // run.status is now 'won'; showMap redirects to the summary
         } else {
           renderReward(app, {
-            goldEarned,
+            goldEarned, relicWon,
             onPick: (cardId) => { addCardToDeck(run, cardId); showMap(); },
             onSkip: () => showMap(),
           });
@@ -85,6 +119,14 @@ function enterNode(nodeId) {
         showMap(); // run.status is now 'lost'; showMap redirects to the summary
       }
     },
+  });
+}
+
+function showActTransition(completedAct) {
+  renderActTransition(app, {
+    completedAct,
+    nextAct: run.act,
+    onContinue: () => showMap(),
   });
 }
 

@@ -11,7 +11,7 @@ function pickRandom(pool, count) {
   return picked;
 }
 
-export function renderReward(app, { goldEarned = 0, onPick, onSkip }) {
+export function renderReward(app, { goldEarned = 0, relicWon = null, onPick, onSkip }) {
   app.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'reward-screen';
@@ -21,6 +21,7 @@ export function renderReward(app, { goldEarned = 0, onPick, onSkip }) {
   screen.innerHTML = `
     <div class="reward-title text-outline">Choose a Card</div>
     ${goldEarned ? `<div class="reward-gold">💰 +${goldEarned} gold</div>` : ''}
+    ${relicWon ? `<div class="reward-relic">${relicWon.icon} <strong>${relicWon.name}</strong> — ${relicWon.description}</div>` : ''}
     <div class="reward-cards" id="reward-cards"></div>
     <button class="btn btn-red" id="btn-skip">Skip</button>
   `;

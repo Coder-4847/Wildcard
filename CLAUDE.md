@@ -14,29 +14,30 @@ A polished 2D deckbuilder roguelike (Slay the Spire-style) for phone and desktop
 - `index.html` — single entry point, loads `main.js` as a module, holds the `#app` mount point and Google Fonts links.
 - `css/style.css` — all styling. Deep blue-purple backgrounds, gold accents, red for attack, blue for block, green for healing. Thick dark outlines, rounded corners, glossy pressable buttons (lighter top edge, darker bottom edge). Heavy rounded display font for names/numbers with dark text outlines.
 - `audio.js` — Web Audio synth helpers (`playSound(name)` style API). No audio files ever.
-- `data/cards.js` — card definitions (id, name, cost, type, rarity, archetype, description, effects[]). `getCard('id+')` synthesizes the upgraded form generically (see below) — upgrades are not hand-authored per card.
-- `data/enemies.js` — enemy definitions (id, name, maxHp, intent pattern/AI, `tier`, `eliteEligible`). `getNormalEnemyPool()` / `getEliteEnemyPool()` / `getBossId()` are the map's enemy-selection helpers.
-- `data/relics.js` — (from M4) relic definitions.
-- `data/events.js` — (from M4) mystery event definitions.
-- `engine/battle.js` — battle state machine: draw/discard/energy, playing cards, effect execution, enemy AI turn resolution, statuses. Pure logic, no DOM. `createBattle` takes `playerHp` (carried over between fights) and `hpMultiplier`/`dmgMultiplier` (elite/boss scaling) without mutating the base enemy data.
-- `engine/map.js` — pure branching-map generator (`generateAct()`): floors of lane-positioned nodes with guaranteed connectivity from every start node to the boss. No pixel coordinates — `ui/map.js` computes those.
-- `engine/run.js` — run state: deck/gold/HP/map progress, node resolution (`completeNode`), and localStorage save/load (`saveRun`/`loadRun`/`clearRun`). Mid-fight progress is never saved — only completed nodes commit.
+- `data/cards.js` — 60 card definitions (id, name, cost, type, rarity, archetype, description, effects[]). `getCard('id+')` synthesizes the upgraded form generically (see below) — upgrades are not hand-authored per card.
+- `data/enemies.js` — 18 enemy definitions (id, name, maxHp, intent pattern/AI, `tier`: 'normal'|'elite'|'boss', bosses also carry `act`). `getNormalEnemyPool()` / `getEliteEnemyPool()` / `getBossId(act)` are the map's enemy-selection helpers. Normal and elite are a shared roster reused across all 3 acts; `engine/run.js` scales them up per act.
+- `data/relics.js` — 15 passive relics. Each is a handful of optional numeric fields (`maxHpBonus`, `energyBonus`, `drawBonus`, `startBlock`/`startMight`/`startWard`, `goldGainPct`, `healOnWinPct`) that `engine/run.js` sums across owned relics — adding a relic is one data entry, not new code.
+- `data/events.js` — 9 mystery events, each 2-3 choices whose `effects` run through `engine/run.js`'s `applyEventEffects` (gold/hp/maxHp/addCard/addRandomCard/removeRandomCard/upgradeRandomCard/relic/randomRelic, any effect can carry `chance`).
+- `engine/battle.js` — battle state machine: draw/discard/energy, playing cards, effect execution, enemy AI turn resolution, statuses. Pure logic, no DOM. `createBattle` takes `playerHp` (carried over between fights), `hpMultiplier`/`dmgMultiplier` (act/elite scaling, applied to a cloned pattern — never mutates base enemy data), and relic-driven `energyBonus`/`drawBonus`/`startBlock`/`startMight`/`startWard`.
+- `engine/map.js` — pure branching-map generator (`generateAct()`): floors of lane-positioned nodes (fight/elite/rest/shop/event, forced fight on floor 0 and rest on the pre-boss floor) with guaranteed connectivity from every start node to the boss. No pixel coordinates — `ui/map.js` computes those.
+- `engine/run.js` — run state: deck/gold/HP/relics/map progress across all 3 Acts, node resolution (`completeNode` — advances to the next Act's map on a non-final boss win, ends the run on the Act 3 boss), relic modifiers, and localStorage save/load (`saveRun`/`loadRun`/`clearRun`). Mid-fight progress is never saved — only completed nodes commit.
 - `ui/title.js` — title screen; shows "Continue Run" when an active save exists.
 - `ui/battle.js` — renders the battle screen from `engine/battle.js` state and wires up taps/clicks.
-- `ui/reward.js` — post-battle "choose 1 of 3 cards or skip" screen.
-- `ui/map.js` — renders the branching map as inline SVG (nodes + connecting edges) with a persistent HP/gold HUD.
+- `ui/reward.js` — post-battle "choose 1 of 3 cards or skip" screen; also shows a relic-found banner when one drops.
+- `ui/map.js` — renders the branching map as inline SVG (nodes + connecting edges) with a persistent HUD (act, HP, gold, owned relic icons).
 - `ui/rest.js` — rest site: heal 30% max HP or permanently upgrade one deck card.
 - `ui/shop.js` — basic shop: buy from 4 random cards (priced by rarity) or pay to remove a card from the deck.
-- `ui/deckView.js` — read-only full-deck viewer, opened from the map HUD.
-- `ui/runSummary.js` — end-of-run screen (Act clear or death) with floors reached / deck size / gold, and a "New Run" button.
+- `ui/event.js` — mystery event screen: flavor text plus choice buttons, gold-cost choices disabled when unaffordable.
+- `ui/deckView.js` — read-only deck + relics viewer, opened from the map HUD.
+- `ui/actTransition.js` — brief "Act N Clear!" screen shown between Acts.
+- `ui/runSummary.js` — end-of-run screen (Act 3 clear or death) with act/floors/deck size/relics/gold, and a "New Run" button.
 - `main.js` — app entry point and screen router; owns the single `run` object and passes it to each screen.
+- `tools/autoplay.mjs` — headless Node script (`node tools/autoplay.mjs [numRuns]`), no browser needed. Simulates full multi-act runs with a heuristic-but-random AI (block when under-blocked against a real incoming hit, otherwise attack) and random map/shop/rest/event choices, to catch crashes/hangs and print a balance report (win rate, avg floor/act reached, turns per battle, deaths by enemy). Uses a tiny in-memory `localStorage` shim since it imports `engine/run.js` directly.
 
 ## Known scope notes for future milestones
-- Battles are 1-vs-1 only (`state.enemy` is a single object, not an array). If Act maps need multi-enemy fights, `engine/battle.js` will need `state.enemies: []` and effect targeting will need to support picking a specific enemy — treat that as a deliberate refactor, not a patch.
-- Only Act 1 exists (`engine/map.js` always generates one act, `main.js`/`engine/run.js` have no act-transition logic). Acts 2-3 and their bosses are M4 work: `generateAct()` will need an act number to pick different boss/enemy pools, and `run.js` needs an "advance to next act" step instead of ending the run at the Act-1 boss.
-- Elites reuse the 3 toughest normal enemies scaled up (`ELITE_HP_MULTIPLIER`/`ELITE_DMG_MULTIPLIER` in `engine/run.js`) rather than having dedicated elite data. Give elites their own `data/enemies.js` entries in M4 when the full 12/3/3 roster is built.
-- Mystery events (the 5th node type from the design brief) are not implemented — `engine/map.js` only generates fight/elite/rest/shop/boss. Add `'event'` to the weighted type pool and `data/events.js` + `ui/event.js` in M4.
-- Relics are not implemented yet; `run` has no relics field. Add it alongside `data/relics.js` in M4.
+- Battles are 1-vs-1 only (`state.enemy` is a single object, not an array). If a future milestone needs multi-enemy fights, `engine/battle.js` will need `state.enemies: []` and effect targeting will need to support picking a specific enemy — treat that as a deliberate refactor, not a patch.
+- Balance is a first pass, not tuned: `tools/autoplay.mjs` currently shows roughly a 3% clear rate for a non-strategic heuristic AI across 60 runs (healthy — a human playing well should do much better — but M5's "balance tuning" should re-run this script after any numeric changes and watch both the win rate and the "deaths by enemy" spread for any single fight dominating again).
+- No difficulty settings, meta-progression, or run seeding — every run is independently randomized with no carry-over between runs (matches the brief; flagging in case a future milestone wants seeded runs for testing).
 
 ## Game design reference
 
@@ -56,7 +57,7 @@ One playable hero, "The Jester", with 3 archetypes (card pools, added in M2+):
 ### Cards
 60 total including starters (Strike, Defend). ~18 per archetype plus a few neutral cards. Three rarities (common/uncommon/rare). Every card has an upgraded version.
 
-### Map and run (M3+)
+### Map and run
 - 3 acts, each a branching map of ~8 floors ending in a boss (3 bosses total).
 - Node types: fight, elite fight, rest, shop, mystery event.
 - After each fight: choose 1 of 3 card rewards or skip, plus gold and occasional relics.
@@ -70,6 +71,6 @@ Work one milestone at a time, commit + push, then stop and report to the user be
 - M1 (~$15): one playable battle vs one enemy with the starter deck (draw/discard, energy, block, intents, win/lose). DONE.
 - M2 (~$15): 5 statuses, card effect system, 30 cards, 6 enemies, card reward screen. DONE.
 - M3 (~$15): branching map, full Act 1 run loop, rest sites, basic shop, save/resume, first boss. DONE.
-- M4 (~$15): content complete — 60 cards, all enemies, 3 acts, 3 bosses, relics, events, headless auto-play script for crash/balance testing.
+- M4 (~$15): content complete — 60 cards, all enemies, 3 acts, 3 bosses, relics, events, headless auto-play script for crash/balance testing. DONE.
 - M5 (~$25): polish — animations, sound, screen shake, transitions, tutorial, settings, run summary, balance tuning.
 - M6 (~$10): bug fixing, mobile testing fixes, final deployment.

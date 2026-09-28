@@ -650,6 +650,12 @@ button {
 }
 .hud-hp { color: var(--red); }
 .hud-gold { color: var(--gold); }
+.hud-act { color: var(--purple); }
+.hud-relics {
+  display: flex;
+  gap: 2px;
+  font-size: 1.1rem;
+}
 .hud-deck-btn {
   margin-left: auto;
   font-size: 0.85rem;
@@ -695,6 +701,7 @@ button {
 }
 .map-node.current .node-circle { stroke: var(--gold); }
 .map-node.node-elite.state-available .node-circle { filter: drop-shadow(0 0 8px var(--purple)); }
+.map-node.node-event.state-available .node-circle { filter: drop-shadow(0 0 8px var(--blue)); }
 .map-node.node-boss .node-circle { fill: #3a1030; }
 .map-node.node-boss.state-available .node-circle { filter: drop-shadow(0 0 14px var(--gold)); }
 
@@ -751,6 +758,38 @@ button {
 .upgrade-grid .card, .deck-grid .card { margin-top: 0; cursor: pointer; }
 .card-upgraded { box-shadow: 0 5px 0 var(--outline), 0 0 12px rgba(255,203,61,0.6); }
 
+.relic-grid {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 700px;
+}
+.relic-tile {
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  background: var(--panel);
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 0.5rem 0.4rem;
+  box-shadow: 0 4px 0 var(--outline);
+}
+.relic-tile-icon { font-size: 1.6rem; }
+.relic-tile-name {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  text-align: center;
+}
+.relic-tile-desc {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.2;
+}
+
 /* ==== SHOP SCREEN ==== */
 .shop-cards {
   display: flex;
@@ -764,6 +803,39 @@ button {
   color: var(--gold);
   margin-top: 0.15rem;
 }
+
+/* ==== EVENT SCREEN ==== */
+.event-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+.event-icon { font-size: 3rem; }
+.event-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 6vw, 2.2rem);
+  color: var(--gold);
+}
+.event-text {
+  color: var(--text-dim);
+  max-width: 480px;
+  font-size: 0.95rem;
+}
+.event-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+  width: 100%;
+  max-width: 380px;
+}
+.event-choice-btn { font-size: 0.95rem; }
 
 /* ==== RUN SUMMARY ==== */
 .run-summary-stats {
@@ -790,6 +862,17 @@ button {
   font-size: 1rem;
   margin-top: -0.8rem;
 }
+.reward-relic {
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 3px solid var(--outline);
+  border-radius: 10px;
+  padding: 0.4rem 0.8rem;
+  max-width: 420px;
+  text-align: center;
+}
+.reward-relic strong { color: var(--gold); }
 
 /* small screens: tighten */
 @media (max-width: 420px) {
