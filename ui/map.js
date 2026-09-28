@@ -69,8 +69,10 @@ export function renderMap(app, { run, onEnterNode, onOpenDeck, onSettings }) {
       <div class="hud-stat hud-hp">❤️ ${run.hp}/${run.maxHp}</div>
       <div class="hud-stat hud-gold">💰 ${run.gold}</div>
       ${relicIcons ? `<div class="hud-relics">${relicIcons}</div>` : ''}
-      <button class="btn btn-blue hud-deck-btn" id="btn-hud-deck">Deck (${run.deck.length})</button>
-      <button class="icon-btn hud-settings-btn" id="btn-hud-settings" title="Settings">⚙️</button>
+      <div class="hud-actions">
+        <button class="btn btn-blue hud-deck-btn" id="btn-hud-deck">Deck (${run.deck.length})</button>
+        <button class="icon-btn hud-settings-btn" id="btn-hud-settings" title="Settings">⚙️</button>
+      </div>
     </div>
     <div class="map-scroll" id="map-scroll">${svg}</div>
   `;

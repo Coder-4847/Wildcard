@@ -23,12 +23,17 @@ let run = null;
 
 // Every screen switch routes through here so transitions apply uniformly without
 // touching each ui/*.js file: fade #app out, swap its content, fade back in.
+// Pointer events are suppressed for the duration so a rapid double-tap can't land a
+// second click on the outgoing screen's still-live buttons before it's replaced
+// (e.g. double-tapping a reward card or a shop purchase before the map swaps in).
 const TRANSITION_MS = 150;
 function show(renderFn) {
   app.classList.add('screen-fade-out');
+  app.style.pointerEvents = 'none';
   setTimeout(() => {
     renderFn();
     app.classList.remove('screen-fade-out');
+    app.style.pointerEvents = '';
   }, TRANSITION_MS);
 }
 
@@ -74,6 +79,7 @@ function enterNode(nodeId) {
       run,
       onHeal: () => { healPercent(run, 0.3); completeNode(run, nodeId); showMap(); },
       onUpgrade: (deckIndex) => { upgradeCardInDeck(run, deckIndex); completeNode(run, nodeId); showMap(); },
+      onLeave: () => { completeNode(run, nodeId); showMap(); },
     }));
     return;
   }

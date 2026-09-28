@@ -70,7 +70,11 @@ export function renderShop(app, { run, onBuyCard, onRemoveCard, onLeave }) {
   }
   renderStock();
 
-  screen.querySelector('#btn-remove').addEventListener('click', () => {
+  const removeBtn = screen.querySelector('#btn-remove');
+  if (run.deck.length <= 1) removeBtn.disabled = true;
+
+  removeBtn.addEventListener('click', () => {
+    if (run.deck.length <= 1) return;
     playSound('click');
     removeGrid.classList.toggle('show');
     if (!removeGrid.classList.contains('show')) return;

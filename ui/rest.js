@@ -3,11 +3,13 @@ import { playSound } from '../audio.js';
 
 const HEAL_PCT = 0.3;
 
-export function renderRest(app, { run, onHeal, onUpgrade }) {
+export function renderRest(app, { run, onHeal, onUpgrade, onLeave }) {
   app.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'rest-screen';
   const healAmount = Math.round(run.maxHp * HEAL_PCT);
+  const canHeal = run.hp < run.maxHp;
+  const hasUpgradable = run.deck.some((id) => !isUpgraded(id));
   screen.innerHTML = `
     <div class="rest-title text-outline">🔥 Rest Site</div>
     <div class="rest-choices" id="rest-choices">
@@ -15,24 +17,34 @@ export function renderRest(app, { run, onHeal, onUpgrade }) {
       <button class="btn btn-blue rest-choice-btn" id="btn-upgrade">Upgrade a Card<br><span class="rest-choice-sub">Permanently improve one card</span></button>
     </div>
     <div class="upgrade-grid" id="upgrade-grid"></div>
+    ${!canHeal && !hasUpgradable ? '<button class="btn btn-red" id="btn-leave">Continue</button>' : ''}
   `;
   app.appendChild(screen);
 
-  screen.querySelector('#btn-heal').addEventListener('click', () => {
-    if (run.hp >= run.maxHp) return;
+  const choicesEl = screen.querySelector('#rest-choices');
+  const grid = screen.querySelector('#upgrade-grid');
+
+  const healBtn = screen.querySelector('#btn-heal');
+  healBtn.addEventListener('click', () => {
+    if (!canHeal) return;
     playSound('statusBuff');
     onHeal();
   });
-  if (run.hp >= run.maxHp) {
-    screen.querySelector('#btn-heal').disabled = true;
-  }
+  if (!canHeal) healBtn.disabled = true;
 
-  const grid = screen.querySelector('#upgrade-grid');
-  screen.querySelector('#btn-upgrade').addEventListener('click', () => {
+  const upgradeBtn = screen.querySelector('#btn-upgrade');
+  if (!hasUpgradable) upgradeBtn.disabled = true;
+  upgradeBtn.addEventListener('click', () => {
+    if (!hasUpgradable) return;
     playSound('click');
-    screen.querySelector('#rest-choices').style.display = 'none';
+    choicesEl.style.display = 'none';
     grid.classList.add('show');
-    grid.innerHTML = '';
+    grid.innerHTML = '<button class="btn btn-blue rest-back-btn" id="btn-upgrade-back">Back</button>';
+    screen.querySelector('#btn-upgrade-back').addEventListener('click', () => {
+      playSound('click');
+      grid.classList.remove('show');
+      choicesEl.style.display = '';
+    });
     run.deck.forEach((cardId, index) => {
       if (isUpgraded(cardId)) return;
       const card = getCard(cardId);
@@ -50,8 +62,13 @@ export function renderRest(app, { run, onHeal, onUpgrade }) {
       });
       grid.appendChild(cardEl);
     });
-    if (!grid.children.length) {
-      grid.innerHTML = '<div class="rest-choice-sub">Every card is already upgraded.</div>';
-    }
   });
+
+  const leaveBtn = screen.querySelector('#btn-leave');
+  if (leaveBtn) {
+    leaveBtn.addEventListener('click', () => {
+      playSound('click');
+      onLeave();
+    });
+  }
 }
