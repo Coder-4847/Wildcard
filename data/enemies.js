@@ -1,5 +1,6 @@
 // Enemy data. `pattern` is a fixed list of intents the enemy cycles through in order.
-// Intent types available in M1: 'attack' (value = damage), 'defend' (value = block gained).
+// Each intent has an `effects` array using the same effect format as cards (see engine/battle.js),
+// where `target: 'self'` means the enemy itself and `target: 'opponent'` means the player.
 
 export const ENEMIES = [
   {
@@ -8,9 +9,71 @@ export const ENEMIES = [
     maxHp: 42,
     icon: '🟢',
     pattern: [
-      { type: 'attack', value: 8 },
-      { type: 'attack', value: 8 },
-      { type: 'defend', value: 6 },
+      { effects: [{ type: 'damage', value: 8, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 8, target: 'opponent' }] },
+      { effects: [{ type: 'block', value: 6, target: 'self' }] },
+    ],
+  },
+  {
+    id: 'goblin',
+    name: 'Goblin',
+    maxHp: 38,
+    icon: '👺',
+    pattern: [
+      { effects: [{ type: 'damage', value: 9, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 9, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 14, target: 'opponent' }] },
+    ],
+  },
+  {
+    id: 'fanged_rat',
+    name: 'Fanged Rat',
+    maxHp: 34,
+    icon: '🐀',
+    pattern: [
+      { effects: [
+        { type: 'damage', value: 6, target: 'opponent' },
+        { type: 'status', status: 'bleed', value: 2, target: 'opponent' },
+      ] },
+      { effects: [{ type: 'damage', value: 6, target: 'opponent' }] },
+      { effects: [{ type: 'block', value: 5, target: 'self' }] },
+    ],
+  },
+  {
+    id: 'shieldbearer',
+    name: 'Shieldbearer',
+    maxHp: 48,
+    icon: '🛡️',
+    pattern: [
+      { effects: [
+        { type: 'block', value: 10, target: 'self' },
+        { type: 'status', status: 'might', value: 2, target: 'self' },
+      ] },
+      { effects: [{ type: 'damage', value: 6, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 6, target: 'opponent' }] },
+    ],
+  },
+  {
+    id: 'hexweaver',
+    name: 'Hexweaver',
+    maxHp: 40,
+    icon: '🧙',
+    pattern: [
+      { effects: [{ type: 'status', status: 'weak', value: 2, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 10, target: 'opponent' }] },
+      { effects: [{ type: 'status', status: 'vulnerable', value: 2, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 10, target: 'opponent' }] },
+    ],
+  },
+  {
+    id: 'brute',
+    name: 'Brute',
+    maxHp: 50,
+    icon: '👹',
+    pattern: [
+      { effects: [{ type: 'damage', value: 12, target: 'opponent' }] },
+      { effects: [{ type: 'damage', value: 6, target: 'opponent' }] },
+      { effects: [{ type: 'block', value: 8, target: 'self' }] },
     ],
   },
 ];

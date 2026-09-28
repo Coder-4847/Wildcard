@@ -1,5 +1,15 @@
 // Battle engine: pure state + logic, no DOM. UI reads `state` and reacts to the
 // `events` array returned by each action to drive animations/sound.
+//
+// Effects (used by both cards and enemy intents) are small data objects:
+//   { type: 'damage', value, target: 'self'|'opponent', hits?, scale? }
+//   { type: 'block',  value, target: 'self'|'opponent', scale? }
+//   { type: 'status', value, target: 'self'|'opponent', status: 'might'|'weak'|'vulnerable'|'bleed'|'ward' }
+//   { type: 'draw',   value, target: 'self' }   // player only
+//   { type: 'energy', value, target: 'self' }   // player only
+// `target` is relative to whoever is acting (the card's player, or the enemy on its turn).
+// `scale` (optional, on damage/block) adds bonus value from a live stat:
+//   { source: 'opponentBleed'|'selfBlock'|'selfWard'|'cardsPlayedThisTurn', multiplier }
 
 import { getCard } from '../data/cards.js';
 import { getEnemy } from '../data/enemies.js';
@@ -21,6 +31,10 @@ function shuffle(array) {
   return arr;
 }
 
+function freshStatuses() {
+  return { might: 0, weak: 0, vulnerable: 0, bleed: 0, ward: 0 };
+}
+
 function computeIntent(enemy) {
   return enemy.pattern[enemy.patternIndex % enemy.pattern.length];
 }
@@ -32,11 +46,13 @@ export function createBattle({ deckIds, playerMaxHp = 70, enemyId }) {
       maxHp: playerMaxHp,
       hp: playerMaxHp,
       block: 0,
+      statuses: freshStatuses(),
       energy: PLAYER_MAX_ENERGY,
       energyMax: PLAYER_MAX_ENERGY,
       drawPile: shuffle(deckIds),
       hand: [],
       discard: [],
+      cardsPlayedThisTurn: 0,
     },
     enemy: {
       id: enemyData.id,
@@ -45,6 +61,7 @@ export function createBattle({ deckIds, playerMaxHp = 70, enemyId }) {
       maxHp: enemyData.maxHp,
       hp: enemyData.maxHp,
       block: 0,
+      statuses: freshStatuses(),
       pattern: enemyData.pattern,
       patternIndex: 0,
       intent: null,
@@ -74,32 +91,98 @@ function drawCards(state, count, events) {
   }
 }
 
+// Runs at the start of `unit`'s own turn: resets block, ticks Bleed (damage then
+// decays), and decays Weak/Vulnerable by one stack. Might and Ward do not decay.
+function tickStartOfTurn(unit, unitKey, events) {
+  unit.block = 0;
+  const st = unit.statuses;
+  if (st.bleed > 0) {
+    const amount = Math.min(unit.hp, st.bleed);
+    unit.hp -= amount;
+    events.push({ type: 'bleedTick', target: unitKey, amount });
+    st.bleed -= 1;
+  }
+  if (st.weak > 0) st.weak -= 1;
+  if (st.vulnerable > 0) st.vulnerable -= 1;
+}
+
+function getScaleValue(scale, ctx) {
+  if (!scale) return 0;
+  let base = 0;
+  switch (scale.source) {
+    case 'opponentBleed': base = ctx.opponent.statuses.bleed; break;
+    case 'selfBlock': base = ctx.actor.block; break;
+    case 'selfWard': base = ctx.actor.statuses.ward; break;
+    case 'cardsPlayedThisTurn': base = ctx.state.player.cardsPlayedThisTurn; break;
+    default: base = 0;
+  }
+  return base * (scale.multiplier || 1);
+}
+
+function dealDamage(amount, targetObj, targetKey, events) {
+  let remaining = amount;
+  if (remaining > 0 && targetObj.block > 0) {
+    const absorbed = Math.min(targetObj.block, remaining);
+    targetObj.block -= absorbed;
+    remaining -= absorbed;
+    if (absorbed > 0) events.push({ type: 'blockHit', target: targetKey, amount: absorbed });
+  }
+  if (remaining > 0 && targetObj.statuses.ward > 0) {
+    const absorbed = Math.min(targetObj.statuses.ward, remaining);
+    targetObj.statuses.ward -= absorbed;
+    remaining -= absorbed;
+    if (absorbed > 0) events.push({ type: 'wardHit', target: targetKey, amount: absorbed });
+  }
+  if (remaining > 0) {
+    targetObj.hp = Math.max(0, targetObj.hp - remaining);
+    events.push({ type: 'damage', target: targetKey, amount: remaining });
+  }
+}
+
+function applyEffect(effect, ctx, events) {
+  const isSelf = effect.target === 'self';
+  const targetObj = isSelf ? ctx.actor : ctx.opponent;
+  const targetKey = isSelf ? ctx.actorKey : ctx.opponentKey;
+
+  if (effect.type === 'damage') {
+    const hits = effect.hits || 1;
+    for (let i = 0; i < hits; i++) {
+      let amount = effect.value + getScaleValue(effect.scale, ctx);
+      if (!isSelf) {
+        amount += ctx.actor.statuses.might || 0;
+        if (ctx.actor.statuses.weak > 0) amount = Math.floor(amount * 0.75);
+      }
+      if (targetObj.statuses.vulnerable > 0) amount = Math.floor(amount * 1.5);
+      amount = Math.max(0, amount);
+      dealDamage(amount, targetObj, targetKey, events);
+    }
+  } else if (effect.type === 'block') {
+    const amount = effect.value + getScaleValue(effect.scale, ctx);
+    targetObj.block += amount;
+    events.push({ type: 'block', target: targetKey, amount });
+  } else if (effect.type === 'status') {
+    targetObj.statuses[effect.status] = (targetObj.statuses[effect.status] || 0) + effect.value;
+    events.push({ type: 'status', target: targetKey, status: effect.status, amount: effect.value });
+  } else if (effect.type === 'draw') {
+    if (ctx.actorKey === 'player') drawCards(ctx.state, effect.value, events);
+  } else if (effect.type === 'energy') {
+    if (ctx.actorKey === 'player') {
+      ctx.actor.energy += effect.value;
+      events.push({ type: 'energyGain', amount: effect.value });
+    }
+  }
+}
+
 function startPlayerTurn(state, events) {
   state.turn = 'player';
   state.turnNumber += 1;
-  state.player.block = 0;
+  tickStartOfTurn(state.player, 'player', events);
+  checkOutcome(state, events);
+  if (state.outcome) return;
   state.player.energy = state.player.energyMax;
+  state.player.cardsPlayedThisTurn = 0;
   drawCards(state, CARDS_PER_DRAW, events);
   events.push({ type: 'turnStart', who: 'player' });
-}
-
-function applyEffect(effect, target, events, targetKey) {
-  if (effect.type === 'damage') {
-    let amount = effect.value;
-    if (target.block > 0) {
-      const absorbed = Math.min(target.block, amount);
-      target.block -= absorbed;
-      amount -= absorbed;
-      if (absorbed > 0) events.push({ type: 'blockHit', target: targetKey, amount: absorbed });
-    }
-    if (amount > 0) {
-      target.hp = Math.max(0, target.hp - amount);
-      events.push({ type: 'damage', target: targetKey, amount });
-    }
-  } else if (effect.type === 'block') {
-    target.block += effect.value;
-    events.push({ type: 'block', target: targetKey, amount: effect.value });
-  }
 }
 
 export function playCard(state, uid) {
@@ -115,32 +198,34 @@ export function playCard(state, uid) {
   p.energy -= card.cost;
   p.hand.splice(handIndex, 1);
   p.discard.push(instance.id);
+  p.cardsPlayedThisTurn += 1;
   events.push({ type: 'play', cardId: card.id, uid });
 
+  const ctx = { actor: p, opponent: state.enemy, actorKey: 'player', opponentKey: 'enemy', state };
   for (const effect of card.effects) {
-    const target = effect.type === 'damage' ? state.enemy : p;
-    const targetKey = effect.type === 'damage' ? 'enemy' : 'player';
-    applyEffect(effect, target, events, targetKey);
+    applyEffect(effect, ctx, events);
+    checkOutcome(state, events);
+    if (state.outcome) break;
   }
 
-  checkOutcome(state, events);
   return events;
 }
 
 function runEnemyTurn(state, events) {
   const enemy = state.enemy;
   const p = state.player;
-  const intent = enemy.intent;
-  events.push({ type: 'turnStart', who: 'enemy' });
-
-  if (intent.type === 'attack') {
-    applyEffect({ type: 'damage', value: intent.value }, p, events, 'player');
-  } else if (intent.type === 'defend') {
-    applyEffect({ type: 'block', value: intent.value }, enemy, events, 'enemy');
-  }
-
+  tickStartOfTurn(enemy, 'enemy', events);
   checkOutcome(state, events);
   if (state.outcome) return;
+
+  events.push({ type: 'turnStart', who: 'enemy' });
+  const intent = enemy.intent;
+  const ctx = { actor: enemy, opponent: p, actorKey: 'enemy', opponentKey: 'player', state };
+  for (const effect of intent.effects) {
+    applyEffect(effect, ctx, events);
+    checkOutcome(state, events);
+    if (state.outcome) return;
+  }
 
   enemy.patternIndex += 1;
   enemy.intent = computeIntent(enemy);

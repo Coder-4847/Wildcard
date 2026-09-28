@@ -1,18 +1,46 @@
 import { renderTitle } from './ui/title.js';
 import { renderBattle } from './ui/battle.js';
+import { renderReward } from './ui/reward.js';
+import { renderEnemySelect } from './ui/enemySelect.js';
 import { buildStarterDeck } from './data/cards.js';
 
 const app = document.getElementById('app');
 
+let currentDeck = buildStarterDeck();
+
 function showTitle() {
-  renderTitle(app, { onStartBattle: showBattle });
+  currentDeck = buildStarterDeck();
+  renderTitle(app, { onStartBattle: showEnemySelect });
 }
 
-function showBattle() {
+function showEnemySelect() {
+  renderEnemySelect(app, {
+    deckIds: currentDeck,
+    onPickEnemy: (enemyId) => showBattle(enemyId),
+  });
+}
+
+function showBattle(enemyId) {
   renderBattle(app, {
-    deckIds: buildStarterDeck(),
-    enemyId: 'slime',
-    onExit: showTitle,
+    deckIds: currentDeck,
+    enemyId,
+    onExit: (result) => {
+      if (result === 'win') {
+        showReward();
+      } else {
+        showTitle();
+      }
+    },
+  });
+}
+
+function showReward() {
+  renderReward(app, {
+    onPick: (cardId) => {
+      currentDeck = [...currentDeck, cardId];
+      showEnemySelect();
+    },
+    onSkip: () => showEnemySelect(),
   });
 }
 

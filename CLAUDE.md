@@ -23,7 +23,13 @@ A polished 2D deckbuilder roguelike (Slay the Spire-style) for phone and desktop
 - `engine/map.js` — (from M3+) branching map generation.
 - `ui/title.js` — title screen.
 - `ui/battle.js` — renders the battle screen from `engine/battle.js` state and wires up taps/clicks.
-- `main.js` — app entry point; simple screen router that mounts/unmounts screens into `#app`.
+- `ui/reward.js` — post-battle "choose 1 of 3 cards or skip" screen.
+- `ui/enemySelect.js` — **temporary** "choose your fight" screen standing in for the real map until M3 lands. Also shows the current run deck.
+- `main.js` — app entry point; simple screen router that mounts/unmounts screens into `#app`. Currently holds an in-memory `currentDeck` that persists across fights and resets to the starter deck on loss or return to title — this will be replaced by `engine/run.js` + save/resume in M3.
+
+## Known scope notes for future milestones
+- Battles are 1-vs-1 only (`state.enemy` is a single object, not an array). If Act maps need multi-enemy fights, `engine/battle.js` will need `state.enemies: []` and effect targeting will need to support picking a specific enemy — treat that as a deliberate refactor, not a patch.
+- Cards do not yet have upgraded variants. Add an `upgraded` field/variant to `data/cards.js` entries when rest-site upgrades are implemented (M3).
 
 ## Game design reference
 
@@ -55,7 +61,7 @@ One playable hero, "The Jester", with 3 archetypes (card pools, added in M2+):
 Work one milestone at a time, commit + push, then stop and report to the user before continuing. Do not add features from a later milestone early.
 - M0 (~$2): skeleton, title screen. DONE.
 - M1 (~$15): one playable battle vs one enemy with the starter deck (draw/discard, energy, block, intents, win/lose). DONE.
-- M2 (~$15): 5 statuses, card effect system, 30 cards, 6 enemies, card reward screen.
+- M2 (~$15): 5 statuses, card effect system, 30 cards, 6 enemies, card reward screen. DONE.
 - M3 (~$15): branching map, full Act 1 run loop, rest sites, basic shop, save/resume, first boss.
 - M4 (~$15): content complete — 60 cards, all enemies, 3 acts, 3 bosses, relics, events, headless auto-play script for crash/balance testing.
 - M5 (~$25): polish — animations, sound, screen shake, transitions, tutorial, settings, run summary, balance tuning.

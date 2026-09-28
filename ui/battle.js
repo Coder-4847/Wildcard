@@ -2,19 +2,44 @@ import { getCard } from '../data/cards.js';
 import { createBattle, playCard, endPlayerTurn, canPlayCard } from '../engine/battle.js';
 import { playSound } from '../audio.js';
 
-function cardDescription(card) {
-  let desc = card.description;
-  for (const effect of card.effects) {
-    desc = desc.replace(`{${effect.type}}`, effect.value);
+const STATUS_META = {
+  might: { icon: '💪', label: 'Might', cls: 'status-buff' },
+  weak: { icon: '📉', label: 'Weak', cls: 'status-debuff' },
+  vulnerable: { icon: '🎯', label: 'Vulnerable', cls: 'status-debuff' },
+  bleed: { icon: '🩸', label: 'Bleed', cls: 'status-dot' },
+  ward: { icon: '🔰', label: 'Ward', cls: 'status-ward' },
+};
+
+function summarizeIntent(intent) {
+  if (!intent) return { text: '', cls: '' };
+  const dmgEffects = intent.effects.filter((e) => e.type === 'damage' && e.target === 'opponent');
+  if (dmgEffects.length) {
+    const total = dmgEffects.reduce((sum, e) => sum + e.value * (e.hits || 1), 0);
+    return { text: `⚔ ${total}`, cls: 'intent-attack' };
   }
-  return desc;
+  const blockEffect = intent.effects.find((e) => e.type === 'block' && e.target === 'self');
+  if (blockEffect) return { text: `🛡 ${blockEffect.value}`, cls: 'intent-defend' };
+  const statusEffect = intent.effects.find((e) => e.type === 'status');
+  if (statusEffect) {
+    const meta = STATUS_META[statusEffect.status];
+    const isBuff = statusEffect.target === 'self';
+    return { text: `${meta.icon} ${statusEffect.value}`, cls: isBuff ? 'intent-buff' : 'intent-debuff' };
+  }
+  return { text: '?', cls: '' };
 }
 
-function formatIntent(intent) {
-  if (!intent) return { text: '', cls: '' };
-  if (intent.type === 'attack') return { text: `⚔ ${intent.value}`, cls: 'intent-attack' };
-  if (intent.type === 'defend') return { text: `🛡 ${intent.value}`, cls: 'intent-defend' };
-  return { text: '', cls: '' };
+function renderStatusBadges(container, statuses) {
+  container.innerHTML = '';
+  for (const key of Object.keys(STATUS_META)) {
+    const value = statuses[key];
+    if (!value) continue;
+    const meta = STATUS_META[key];
+    const badge = document.createElement('div');
+    badge.className = `status-badge ${meta.cls}`;
+    badge.textContent = `${meta.icon}${value}`;
+    badge.title = meta.label;
+    container.appendChild(badge);
+  }
 }
 
 export function renderBattle(app, { deckIds, enemyId, onExit }) {
@@ -34,6 +59,7 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
           <div class="name-label" id="enemy-name"></div>
           <div class="hp-bar" id="enemy-hp-bar"><div class="hp-bar-fill"></div><div class="hp-bar-text"></div></div>
           <div class="block-pill" id="enemy-block">🛡 <span></span></div>
+          <div class="status-row" id="enemy-statuses"></div>
         </div>
       </div>
       <div class="combatant hero-combatant">
@@ -45,6 +71,7 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
           <div class="name-label">Jester</div>
           <div class="hp-bar hp-hero" id="hero-hp-bar"><div class="hp-bar-fill"></div><div class="hp-bar-text"></div></div>
           <div class="block-pill" id="hero-block">🛡 <span></span></div>
+          <div class="status-row" id="hero-statuses"></div>
         </div>
       </div>
     </div>
@@ -70,10 +97,12 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
     enemyName: screen.querySelector('#enemy-name'),
     enemyHpBar: screen.querySelector('#enemy-hp-bar'),
     enemyBlock: screen.querySelector('#enemy-block'),
+    enemyStatuses: screen.querySelector('#enemy-statuses'),
     enemyFloaters: screen.querySelector('#enemy-floaters'),
     heroSprite: screen.querySelector('#hero-sprite'),
     heroHpBar: screen.querySelector('#hero-hp-bar'),
     heroBlock: screen.querySelector('#hero-block'),
+    heroStatuses: screen.querySelector('#hero-statuses'),
     heroFloaters: screen.querySelector('#hero-floaters'),
     energyOrb: screen.querySelector('#energy-orb'),
     drawCount: screen.querySelector('#draw-count'),
@@ -133,7 +162,13 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
         flash(sprite);
         shakeScreen();
         playSound('attack');
-      } else if (e.type === 'blockHit') {
+      } else if (e.type === 'bleedTick') {
+        const layer = e.target === 'enemy' ? el.enemyFloaters : el.heroFloaters;
+        const sprite = e.target === 'enemy' ? el.enemySprite : el.heroSprite;
+        spawnFloater(layer, `-${e.amount}`, 'dmg');
+        flash(sprite);
+        playSound('bleed');
+      } else if (e.type === 'blockHit' || e.type === 'wardHit') {
         const layer = e.target === 'enemy' ? el.enemyFloaters : el.heroFloaters;
         spawnFloater(layer, `-${e.amount}`, 'blk');
         playSound('block');
@@ -141,6 +176,12 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
         const layer = e.target === 'enemy' ? el.enemyFloaters : el.heroFloaters;
         spawnFloater(layer, `+${e.amount}`, 'blk');
         playSound('block');
+      } else if (e.type === 'status') {
+        const layer = e.target === 'enemy' ? el.enemyFloaters : el.heroFloaters;
+        const meta = STATUS_META[e.status];
+        const isBuff = ['might', 'ward'].includes(e.status);
+        spawnFloater(layer, `${meta.icon}+${e.amount}`, isBuff ? 'heal' : 'dmg');
+        playSound(isBuff ? 'statusBuff' : 'statusDebuff');
       } else if (e.type === 'draw') {
         playSound('draw');
       } else if (e.type === 'reshuffle') {
@@ -157,7 +198,7 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
     const p = state.player;
     const en = state.enemy;
 
-    const intent = formatIntent(en.intent);
+    const intent = summarizeIntent(en.intent);
     el.enemyIntent.textContent = intent.text;
     el.enemyIntent.className = `intent-bubble ${intent.cls}`;
     el.enemyIntent.style.visibility = state.outcome ? 'hidden' : 'visible';
@@ -168,12 +209,14 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
     el.enemyHpBar.querySelector('.hp-bar-text').textContent = `${en.hp}/${en.maxHp}`;
     el.enemyBlock.classList.toggle('show', en.block > 0);
     el.enemyBlock.querySelector('span').textContent = en.block;
+    renderStatusBadges(el.enemyStatuses, en.statuses);
 
     const heroPct = Math.max(0, (p.hp / p.maxHp) * 100);
     el.heroHpBar.querySelector('.hp-bar-fill').style.width = `${heroPct}%`;
     el.heroHpBar.querySelector('.hp-bar-text').textContent = `${p.hp}/${p.maxHp}`;
     el.heroBlock.classList.toggle('show', p.block > 0);
     el.heroBlock.querySelector('span').textContent = p.block;
+    renderStatusBadges(el.heroStatuses, p.statuses);
 
     el.energyOrb.textContent = `${p.energy}/${p.energyMax}`;
     el.drawCount.textContent = p.drawPile.length;
@@ -195,7 +238,7 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
         <div class="card-cost">${card.cost}</div>
         <div class="card-name">${card.name}</div>
         <div class="card-art">${card.icon}</div>
-        <div class="card-desc">${cardDescription(card)}</div>
+        <div class="card-desc">${card.description}</div>
       `;
       cardEl.addEventListener('click', () => {
         if (!canPlayCard(state, instance.uid)) return;
@@ -219,7 +262,7 @@ export function renderBattle(app, { deckIds, enemyId, onExit }) {
     screen.appendChild(overlay);
     overlay.querySelector('#btn-continue').addEventListener('click', () => {
       playSound('click');
-      onExit();
+      onExit(result);
     });
   }
 }

@@ -213,6 +213,8 @@ button {
 }
 .intent-bubble.intent-attack { color: var(--red); }
 .intent-bubble.intent-defend { color: var(--blue); }
+.intent-bubble.intent-buff { color: var(--gold); }
+.intent-bubble.intent-debuff { color: var(--purple); }
 .intent-icon { font-size: 1.1rem; }
 
 .char-sprite {
@@ -302,6 +304,27 @@ button {
   visibility: hidden;
 }
 .block-pill.show { visibility: visible; }
+
+.status-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+  min-height: 1.2rem;
+}
+.status-badge {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  border-radius: 8px;
+  border: 2px solid var(--outline);
+  padding: 0 4px;
+  line-height: 1.3rem;
+}
+.status-badge.status-buff { background: var(--gold-dark); color: var(--text); }
+.status-badge.status-debuff { background: var(--purple); color: var(--text); }
+.status-badge.status-dot { background: var(--red-dark); color: var(--text); }
+.status-badge.status-ward { background: var(--blue-dark); color: var(--text); }
 
 .floater-layer {
   position: absolute; inset: 0;
@@ -495,6 +518,119 @@ button {
   z-index: 10;
 }
 .battle-log-toast.show { opacity: 1; }
+
+/* ==== REWARD SCREEN ==== */
+.reward-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+.reward-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  color: var(--gold);
+}
+.reward-cards {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.card.reward-card {
+  width: clamp(96px, 20vw, 140px);
+  height: clamp(140px, 28vw, 200px);
+  cursor: pointer;
+  margin-top: 0;
+}
+.card.reward-card:hover { transform: translateY(-8px) scale(1.05); }
+.card-archetype {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+}
+
+/* ==== ENEMY SELECT SCREEN ==== */
+.select-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  overflow-y: auto;
+}
+.select-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  color: var(--gold);
+}
+.select-sub {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: -0.8rem;
+}
+.enemy-grid {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 700px;
+}
+.enemy-tile {
+  width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: var(--panel);
+  border: 3px solid var(--outline);
+  border-radius: 14px;
+  padding: 0.6rem 0.4rem;
+  box-shadow: 0 5px 0 var(--outline);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.enemy-tile:hover { transform: translateY(-4px); }
+.enemy-tile-icon { font-size: 2rem; }
+.enemy-tile-name {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.enemy-tile-hp {
+  font-size: 0.7rem;
+  color: var(--red);
+}
+.deck-panel {
+  display: none;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--panel);
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  max-width: 320px;
+  width: 100%;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+.deck-panel.show { display: flex; }
+.deck-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  padding: 0.1rem 0;
+}
 
 /* small screens: tighten */
 @media (max-width: 420px) {
